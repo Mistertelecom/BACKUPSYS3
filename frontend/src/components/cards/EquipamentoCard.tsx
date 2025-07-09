@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { Server, Edit, Trash2, Upload, Eye } from 'lucide-react';
+import { Server, Edit, Trash2, Upload, Eye, Cloud, HardDrive } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Modal } from '../ui/Modal';
 import { FileUploader } from '../ui/FileUploader';
-import { backupsAPI } from '../../services/api';
+import { backupsAPI, providersAPI } from '../../services/api';
 
 interface Equipamento {
   id: number;
@@ -13,6 +13,14 @@ interface Equipamento {
   tipo: string;
   created_at: string;
   backup_count: number;
+}
+
+interface Provider {
+  id: number;
+  nome: string;
+  tipo: string;
+  ativo: boolean;
+  configuracao: any;
 }
 
 interface EquipamentoCardProps {
@@ -26,6 +34,33 @@ export function EquipamentoCard({ equipamento, onEdit, onDelete, onViewBackups }
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [providers, setProviders] = useState<Provider[]>([]);
+  const [selectedProvider, setSelectedProvider] = useState<number | null>(null);
+  const [isLoadingProviders, setIsLoadingProviders] = useState(false);
+
+  const fetchProviders = async () => {
+    setIsLoadingProviders(true);
+    try {
+      const response = await providersAPI.getActive();
+      setProviders(response.data);
+      
+      // Set default provider (local provider or first active provider)
+      const localProvider = response.data.find((p: Provider) => p.tipo === 'local');
+      if (localProvider) {
+        setSelectedProvider(localProvider.id);
+      } else if (response.data.length > 0) {
+        setSelectedProvider(response.data[0].id);
+      }
+    } catch (error: any) {
+      console.error('Erro ao carregar provedores:', error);
+      // If providers fail to load, still allow upload with null provider (will use default/local)
+      toast.error('Erro ao carregar provedores de storage. Será usado o provedor padrão.');
+      setProviders([]);
+      setSelectedProvider(null);
+    } finally {
+      setIsLoadingProviders(false);
+    }
+  };
 
   const handleUpload = async () => {
     if (!selectedFile) {
@@ -35,7 +70,7 @@ export function EquipamentoCard({ equipamento, onEdit, onDelete, onViewBackups }
 
     setIsUploading(true);
     try {
-      await backupsAPI.upload(equipamento.id, selectedFile);
+      await backupsAPI.upload(equipamento.id, selectedFile, selectedProvider || undefined);
       toast.success('Backup enviado com sucesso!');
       setShowUploadModal(false);
       setSelectedFile(null);
@@ -46,6 +81,39 @@ export function EquipamentoCard({ equipamento, onEdit, onDelete, onViewBackups }
       toast.error(errorMessage);
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  const handleOpenUploadModal = () => {
+    setShowUploadModal(true);
+    fetchProviders();
+  };
+
+  const getProviderIcon = (tipo: string) => {
+    switch (tipo) {
+      case 'local':
+        return <HardDrive className="h-4 w-4" />;
+      case 'aws':
+      case 'gcp':
+      case 'azure':
+        return <Cloud className="h-4 w-4" />;
+      default:
+        return <Server className="h-4 w-4" />;
+    }
+  };
+
+  const getProviderTypeLabel = (tipo: string) => {
+    switch (tipo) {
+      case 'local':
+        return 'Armazenamento Local';
+      case 'aws':
+        return 'Amazon S3';
+      case 'gcp':
+        return 'Google Cloud Storage';
+      case 'azure':
+        return 'Azure Blob Storage';
+      default:
+        return tipo;
     }
   };
 
@@ -61,29 +129,29 @@ export function EquipamentoCard({ equipamento, onEdit, onDelete, onViewBackups }
 
   return (
     <>
-      <div className="card hover:shadow-lg transition-shadow">
+      <div className="card hover:shadow-lg transition-all duration-300 group">
         <div className="card-body">
           <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-blue-100 rounded-full">
+            <div className="flex items-center space-x-3 flex-1">
+              <div className="icon-container bg-blue-100 group-hover:bg-blue-200 transition-colors">
                 <Server className="h-5 w-5 text-blue-600" />
               </div>
-              <div>
-                <h3 className="font-semibold text-gray-900">{equipamento.nome}</h3>
-                <p className="text-sm text-gray-500">{equipamento.tipo}</p>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-gray-900 text-lg mb-1 truncate">{equipamento.nome}</h3>
+                <p className="text-sm text-gray-600 font-medium">{equipamento.tipo}</p>
               </div>
             </div>
-            <div className="flex space-x-1">
+            <div className="flex space-x-1 ml-2">
               <button
                 onClick={() => onEdit(equipamento)}
-                className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                className="p-2 hover:bg-gray-100 rounded-xl transition-all duration-200"
                 title="Editar"
               >
                 <Edit className="h-4 w-4 text-gray-500" />
               </button>
               <button
                 onClick={handleDelete}
-                className="p-1 hover:bg-red-100 rounded-full transition-colors"
+                className="p-2 hover:bg-red-100 rounded-xl transition-all duration-200"
                 title="Excluir"
               >
                 <Trash2 className="h-4 w-4 text-red-500" />
@@ -91,26 +159,26 @@ export function EquipamentoCard({ equipamento, onEdit, onDelete, onViewBackups }
             </div>
           </div>
 
-          <div className="space-y-2 mb-4">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-500">IP:</span>
-              <span className="font-medium">{equipamento.ip}</span>
+          <div className="space-y-3 mb-6">
+            <div className="flex justify-between items-center py-2 border-b border-gray-100">
+              <span className="text-sm font-medium text-gray-600">IP:</span>
+              <span className="text-sm font-semibold text-gray-900">{equipamento.ip}</span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Backups:</span>
-              <span className="font-medium">{equipamento.backup_count}</span>
+            <div className="flex justify-between items-center py-2 border-b border-gray-100">
+              <span className="text-sm font-medium text-gray-600">Backups:</span>
+              <span className="text-sm font-semibold text-gray-900">{equipamento.backup_count}</span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Criado em:</span>
-              <span className="font-medium">{formatDate(equipamento.created_at)}</span>
+            <div className="flex justify-between items-center py-2">
+              <span className="text-sm font-medium text-gray-600">Criado em:</span>
+              <span className="text-sm font-semibold text-gray-900">{formatDate(equipamento.created_at)}</span>
             </div>
           </div>
 
-          <div className="flex space-x-2">
+          <div className="grid grid-cols-2 gap-3">
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setShowUploadModal(true)}
+              onClick={handleOpenUploadModal}
               className="flex-1"
             >
               <Upload className="h-4 w-4 mr-2" />
@@ -135,18 +203,75 @@ export function EquipamentoCard({ equipamento, onEdit, onDelete, onViewBackups }
         title={`Upload de Backup - ${equipamento.nome}`}
         size="lg"
       >
-        <div className="space-y-4">
-          <div className="text-sm text-gray-600">
-            <p><strong>Equipamento:</strong> {equipamento.nome}</p>
-            <p><strong>IP:</strong> {equipamento.ip}</p>
-            <p><strong>Tipo:</strong> {equipamento.tipo}</p>
+        <div className="space-y-6">
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border border-blue-200">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+              <div>
+                <span className="font-semibold text-blue-800">Equipamento:</span>
+                <p className="text-gray-900 mt-1">{equipamento.nome}</p>
+              </div>
+              <div>
+                <span className="font-semibold text-blue-800">IP:</span>
+                <p className="text-gray-900 mt-1">{equipamento.ip}</p>
+              </div>
+              <div>
+                <span className="font-semibold text-blue-800">Tipo:</span>
+                <p className="text-gray-900 mt-1">{equipamento.tipo}</p>
+              </div>
+            </div>
           </div>
 
-          <FileUploader
-            selectedFile={selectedFile}
-            onFileSelect={setSelectedFile}
-            onFileRemove={() => setSelectedFile(null)}
-          />
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Provedor de Armazenamento
+              </label>
+              {isLoadingProviders ? (
+                <div className="animate-pulse bg-gray-200 h-10 rounded-lg"></div>
+              ) : (
+                <div className="space-y-2">
+                  {providers.map((provider) => (
+                    <label key={provider.id} className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="provider"
+                        value={provider.id}
+                        checked={selectedProvider === provider.id}
+                        onChange={(e) => setSelectedProvider(parseInt(e.target.value))}
+                        className="text-blue-600 focus:ring-blue-500"
+                      />
+                      <div className="flex items-center space-x-2">
+                        {getProviderIcon(provider.tipo)}
+                        <div>
+                          <div className="font-medium text-gray-900">{provider.nome}</div>
+                          <div className="text-sm text-gray-500">{getProviderTypeLabel(provider.tipo)}</div>
+                        </div>
+                      </div>
+                    </label>
+                  ))}
+                  {providers.length === 0 && !isLoadingProviders && (
+                    <div className="text-center py-4 text-gray-500 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <div className="flex items-center justify-center space-x-2">
+                        <HardDrive className="h-4 w-4 text-yellow-600" />
+                        <span>Nenhum provedor ativo encontrado. Será usado o provedor padrão.</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Arquivo de Backup
+              </label>
+              <FileUploader
+                selectedFile={selectedFile}
+                onFileSelect={setSelectedFile}
+                onFileRemove={() => setSelectedFile(null)}
+              />
+            </div>
+          </div>
 
           <div className="flex justify-end space-x-3">
             <Button
