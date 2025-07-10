@@ -56,7 +56,7 @@ export function Modal({
       <div 
         ref={modalRef}
         className={cn(
-          'relative w-full max-h-[90vh] overflow-y-auto bg-white rounded-lg shadow-xl',
+          'modal-content',
           {
             'max-w-md': size === 'sm',
             'max-w-lg': size === 'md',
@@ -65,19 +65,19 @@ export function Modal({
           }
         )}
       >
-        <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-lg font-semibold text-gray-900">
+        <div className="modal-header">
+          <h2 className="text-xl font-semibold text-gray-900">
             {title || 'Modal'}
           </h2>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+            className="p-2 hover:bg-gray-200 rounded-xl transition-all duration-200"
           >
-            <X className="h-5 w-5 text-gray-400" />
+            <X className="h-5 w-5 text-gray-500" />
           </button>
         </div>
         
-        <div className="p-6">
+        <div className="modal-body">
           {children}
         </div>
       </div>

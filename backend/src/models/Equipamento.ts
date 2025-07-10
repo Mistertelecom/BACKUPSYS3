@@ -5,7 +5,41 @@ export interface Equipamento {
   nome: string;
   ip: string;
   tipo: string;
+  ssh_enabled?: boolean;
+  ssh_port?: number;
+  ssh_username?: string;
+  ssh_password?: string;
+  ssh_private_key?: string;
+  http_enabled?: boolean;
+  http_port?: number;
+  http_protocol?: 'http' | 'https';
+  http_username?: string;
+  http_password?: string;
+  http_ignore_ssl?: boolean;
+  auto_backup_enabled?: boolean;
+  auto_backup_schedule?: string;
   created_at?: string;
+}
+
+export interface SSHConfigData {
+  ssh_enabled: boolean;
+  ssh_port: number;
+  ssh_username: string | null;
+  ssh_password: string | null;
+  ssh_private_key: string | null;
+  auto_backup_enabled: boolean;
+  auto_backup_schedule: string;
+}
+
+export interface HTTPConfigData {
+  http_enabled: boolean;
+  http_port: number;
+  http_protocol: 'http' | 'https';
+  http_username: string | null;
+  http_password: string | null;
+  http_ignore_ssl: boolean;
+  auto_backup_enabled: boolean;
+  auto_backup_schedule: string;
 }
 
 export class EquipamentoModel {
@@ -120,6 +154,97 @@ export class EquipamentoModel {
       `;
       
       database.getDatabase().all(sql, [], (err, rows: any[]) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(rows);
+        }
+      });
+    });
+  }
+
+  static async updateSSHConfig(id: number, sshConfig: SSHConfigData): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      const sql = `
+        UPDATE equipamentos SET 
+          ssh_enabled = ?,
+          ssh_port = ?,
+          ssh_username = ?,
+          ssh_password = ?,
+          ssh_private_key = ?,
+          auto_backup_enabled = ?,
+          auto_backup_schedule = ?
+        WHERE id = ?
+      `;
+      
+      const values = [
+        sshConfig.ssh_enabled ? 1 : 0,
+        sshConfig.ssh_port,
+        sshConfig.ssh_username,
+        sshConfig.ssh_password,
+        sshConfig.ssh_private_key,
+        sshConfig.auto_backup_enabled ? 1 : 0,
+        sshConfig.auto_backup_schedule,
+        id
+      ];
+      
+      database.getDatabase().run(sql, values, function(err) {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(this.changes > 0);
+        }
+      });
+    });
+  }
+
+  static async getWithAutoBackupEnabled(): Promise<Equipamento[]> {
+    return new Promise((resolve, reject) => {
+      const sql = `
+        SELECT * FROM equipamentos 
+        WHERE auto_backup_enabled = 1 AND ssh_enabled = 1
+        ORDER BY nome
+      `;
+      
+      database.getDatabase().all(sql, [], (err, rows: Equipamento[]) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(rows);
+        }
+      });
+    });
+  }
+
+  static async getSSHEnabled(): Promise<Equipamento[]> {
+    return new Promise((resolve, reject) => {
+      const sql = `
+        SELECT * FROM equipamentos 
+        WHERE ssh_enabled = 1
+        ORDER BY nome
+      `;
+      
+      database.getDatabase().all(sql, [], (err, rows: Equipamento[]) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(rows);
+        }
+      });
+    });
+  }
+
+  static async getAutoBackupEnabled(): Promise<Equipamento[]> {
+    return new Promise((resolve, reject) => {
+      const sql = `
+        SELECT * FROM equipamentos 
+        WHERE ssh_enabled = 1 
+        AND auto_backup_enabled = 1
+        AND auto_backup_schedule IS NOT NULL
+        ORDER BY nome
+      `;
+      
+      database.getDatabase().all(sql, [], (err, rows: Equipamento[]) => {
         if (err) {
           reject(err);
         } else {

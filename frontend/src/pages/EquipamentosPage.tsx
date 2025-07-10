@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { Plus, Search, Server } from 'lucide-react';
-import { equipamentosAPI } from '../services/api';
+import { equipamentosAPI, backupsAPI } from '../services/api';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { EquipamentoForm } from '../components/forms/EquipamentoForm';
@@ -133,6 +133,24 @@ export function EquipamentosPage() {
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString('pt-BR');
+  };
+
+  const handleDownload = async (backupId: number, filename: string) => {
+    try {
+      const response = await backupsAPI.download(backupId);
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast.success('Download iniciado!');
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.error || 'Erro ao fazer download';
+      toast.error(errorMessage);
+    }
   };
 
   if (isLoading) {
@@ -272,20 +290,24 @@ export function EquipamentosPage() {
         size="xl"
       >
         {selectedEquipamento && (
-          <div className="space-y-4">
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="space-y-6">
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-200">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
                 <div>
-                  <span className="font-medium">Nome:</span> {selectedEquipamento.nome}
+                  <span className="font-semibold text-blue-800">Nome:</span>
+                  <p className="text-gray-900 mt-1 font-medium">{selectedEquipamento.nome}</p>
                 </div>
                 <div>
-                  <span className="font-medium">IP:</span> {selectedEquipamento.ip}
+                  <span className="font-semibold text-blue-800">IP:</span>
+                  <p className="text-gray-900 mt-1 font-medium">{selectedEquipamento.ip}</p>
                 </div>
                 <div>
-                  <span className="font-medium">Tipo:</span> {selectedEquipamento.tipo}
+                  <span className="font-semibold text-blue-800">Tipo:</span>
+                  <p className="text-gray-900 mt-1 font-medium">{selectedEquipamento.tipo}</p>
                 </div>
                 <div>
-                  <span className="font-medium">Total de Backups:</span> {selectedEquipamento.backup_count}
+                  <span className="font-semibold text-blue-800">Total de Backups:</span>
+                  <p className="text-gray-900 mt-1 font-medium">{selectedEquipamento.backup_count}</p>
                 </div>
               </div>
             </div>
@@ -298,20 +320,17 @@ export function EquipamentosPage() {
             ) : (
               <div className="space-y-3 max-h-96 overflow-y-auto">
                 {equipamentoBackups.map((backup) => (
-                  <div key={backup.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div>
-                      <p className="font-medium text-gray-900">{backup.nome_arquivo}</p>
-                      <p className="text-sm text-gray-500">
+                  <div key={backup.id} className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200 hover:shadow-sm transition-all duration-200">
+                    <div className="flex-1">
+                      <p className="font-semibold text-gray-900 mb-1">{backup.nome_arquivo}</p>
+                      <p className="text-sm text-gray-600">
                         Enviado em: {formatDate(backup.data_upload)}
                       </p>
                     </div>
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => {
-                        // Download functionality would be implemented here
-                        toast('Funcionalidade de download será implementada', { icon: 'ℹ️' });
-                      }}
+                      onClick={() => handleDownload(backup.id, backup.nome_arquivo)}
                     >
                       Download
                     </Button>

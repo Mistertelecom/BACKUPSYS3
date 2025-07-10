@@ -3,6 +3,8 @@ import { LoginPage } from '../pages/LoginPage';
 import { DashboardPage } from '../pages/DashboardPage';
 import { EquipamentosPage } from '../pages/EquipamentosPage';
 import { BackupsPage } from '../pages/BackupsPage';
+import { ProvidersPage } from '../pages/ProvidersPage';
+import { UploadBackupPage } from '../pages/UploadBackupPage';
 import { Layout } from '../components/layout/Layout';
 import { ProtectedRoute } from '../components/ProtectedRoute';
 
@@ -22,7 +24,9 @@ export function AppRoutes() {
       >
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="equipamentos" element={<EquipamentosPage />} />
+        <Route path="equipamentos/:equipamentoId/upload" element={<UploadBackupPage />} />
         <Route path="backups" element={<BackupsPage />} />
+        <Route path="providers" element={<ProvidersPage />} />
       </Route>
     </Routes>
   );

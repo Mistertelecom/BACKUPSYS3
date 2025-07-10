@@ -1,133 +1,228 @@
-# 📦 Y BACK - Sistema de Backup para Equipamentos
+# YBACK - Sistema de Backup Automatizado para Equipamentos de Rede
 
-Sistema web profissional para backup de arquivos de equipamentos de provedores, desenvolvido com React + TypeScript + Express + SQLite.
+Sistema completo para automação de backups de equipamentos de rede (Mikrotik, Ubiquiti, Mimosa) com interface web intuitiva e agendamento automatizado.
 
-## 🚀 Tecnologias
+## 🚀 Funcionalidades
 
-- **Frontend**: React 18 + TypeScript + Vite + Tailwind CSS v4
-- **Backend**: Express.js + TypeScript + SQLite
-- **Autenticação**: JWT
-- **Upload**: Multer com validação
-- **Estilização**: Tailwind CSS v4 + componentes customizados
+- **Backup Automatizado**: Suporte para equipamentos Mikrotik, Ubiquiti AirMAX e Mimosa
+- **Interface Web**: Dashboard completo para gerenciamento de equipamentos e backups
+- **Agendamento Intuitivo**: Sistema de agendamento por frequência (diário, semanal, mensal) sem necessidade de conhecer cron
+- **Múltiplos Protocolos**: Suporte para SSH (Mikrotik/Ubiquiti) e HTTP (Mimosa)
+- **Download Direto**: Download dos arquivos de backup através da interface web
+- **Histórico Completo**: Visualização de todos os backups realizados
+- **Containerizado**: Deploy fácil com Docker e Docker Compose
 
-## 📋 Funcionalidades
-
-✅ **Implementado:**
-- Login com identidade visual "Y BACK"
-- Dashboard com auto-refresh (30s)
-- Autenticação JWT
-- Banco de dados SQLite real
-- API completa para equipamentos e backups
-- Upload de arquivos com validação
-- Download de backups
-- Componentes reutilizáveis
-- Validações de segurança
-
-🔄 **Em desenvolvimento:**
-- Páginas de equipamentos com CRUD completo
-- Página de backups com filtros
-
-## 🛠️ Instalação e Execução
-
-### Pré-requisitos
-- Node.js 18+ 
-- npm ou yarn
+## 🛠️ Tecnologias
 
 ### Backend
+- Node.js + TypeScript
+- Express.js
+- SQLite
+- SSH2 para conexões SSH
+- Axios para conexões HTTP
+- Node-cron para agendamento
+
+### Frontend
+- React + TypeScript
+- Vite
+- Tailwind CSS
+- Lucide React (ícones)
+
+### Infraestrutura
+- Docker & Docker Compose
+- Nginx (proxy reverso)
+- SSL/TLS ready
+
+## 📦 Instalação
+
+### Pré-requisitos
+- Docker e Docker Compose instalados
+- Portas 80 e 443 disponíveis (para nginx proxy)
+
+### Deploy Rápido
+
+1. Clone o repositório:
+```bash
+git clone <repository-url>
+cd BACKUP3.0
+```
+
+2. Inicie os serviços:
+```bash
+# Desenvolvimento (sem nginx proxy)
+docker-compose up -d
+
+# Produção (com nginx proxy)
+docker-compose --profile production up -d
+```
+
+3. Acesse a aplicação:
+- **Desenvolvimento**: http://localhost:3000
+- **Produção**: http://localhost (porta 80)
+
+### Configuração Manual
+
+Se preferir executar sem Docker:
+
+#### Backend
 ```bash
 cd backend
 npm install
+cp .env.example .env
 npm run dev
 ```
 
-### Frontend
+#### Frontend
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
 
+## 🔧 Configuração
+
+### Variáveis de Ambiente
+
+#### Backend (.env)
+```env
+NODE_ENV=development
+PORT=3001
+DATABASE_PATH=./database/database.sqlite
+AUTO_BACKUP_DIR=./auto_backups
+```
+
+#### Configuração de Rede
+
+O sistema detecta automaticamente o tipo de equipamento e protocolo:
+- **Mikrotik**: SSH (porta 22 ou customizada)
+- **Ubiquiti**: SSH (porta 22 ou customizada) 
+- **Mimosa**: HTTP/HTTPS (porta 80/443 ou customizada)
+
 ## 🔐 Credenciais Padrão
 
 - **Usuário**: admin
 - **Senha**: admin123
 
-## 📊 Estrutura do Banco de Dados
+## 📱 Como Usar
 
-### Tabela `users`
-| Campo | Tipo | Descrição |
-|-------|------|-----------|
-| id | INTEGER PRIMARY KEY | ID único |
-| username | TEXT | Nome de usuário |
-| password | TEXT | Senha hash |
-| created_at | DATETIME | Data de criação |
+### 1. Adicionar Equipamento
+- Acesse "Equipamentos" no menu lateral
+- Clique em "Adicionar Equipamento"
+- Preencha: Nome, IP, Tipo, Marca e Modelo
 
-### Tabela `equipamentos`
-| Campo | Tipo | Descrição |
-|-------|------|-----------|
-| id | INTEGER PRIMARY KEY | ID único |
-| nome | TEXT | Nome do equipamento |
-| ip | TEXT | IP do equipamento |
-| tipo | TEXT | Tipo do equipamento |
-| created_at | DATETIME | Data de criação |
+### 2. Configurar Backup Automático
+- Na lista de equipamentos, clique em "Configurar Backup"
+- Configure as credenciais de acesso
+- Defina a frequência (Diário, Semanal, Mensal)
+- Escolha o horário de execução
+- Teste a conectividade
+- Salve a configuração
 
-### Tabela `backups`
-| Campo | Tipo | Descrição |
-|-------|------|-----------|
-| id | INTEGER PRIMARY KEY | ID único |
-| equipamento_id | INTEGER | FK para equipamentos |
-| nome_arquivo | TEXT | Nome do arquivo |
-| caminho | TEXT | Caminho do arquivo |
-| data_upload | DATETIME | Data do upload |
+### 3. Executar Backup Manual
+- Na lista de equipamentos, clique em "Executar Backup"
+- Acompanhe o progresso na dashboard
 
-## 🔧 API Endpoints
+### 4. Baixar Backups
+- Acesse a aba "Histórico de Backups"
+- Clique em "Download" no backup desejado
 
-### Autenticação
-- `POST /api/auth/login` - Login
-- `GET /api/auth/validate` - Validar token
+## 🔌 Equipamentos Suportados
 
-### Equipamentos
-- `GET /api/equipamentos` - Listar todos
-- `GET /api/equipamentos/:id` - Buscar por ID
-- `POST /api/equipamentos` - Criar novo
-- `PUT /api/equipamentos/:id` - Atualizar
-- `DELETE /api/equipamentos/:id` - Deletar
-- `GET /api/equipamentos/:id/backups` - Backups do equipamento
+### Mikrotik RouterOS
+- **Protocolo**: SSH
+- **Arquivo**: .rsc (export compact)
+- **Autenticação**: Usuário + Senha
 
-### Backups
-- `GET /api/backups` - Listar todos
-- `GET /api/backups/recent` - Backups recentes
-- `GET /api/backups/:id` - Buscar por ID
-- `POST /api/backups/equipamento/:id` - Upload de backup
-- `GET /api/backups/:id/download` - Download
-- `DELETE /api/backups/:id` - Deletar
+### Ubiquiti AirMAX
+- **Protocolo**: SSH  
+- **Arquivo**: system.cfg
+- **Autenticação**: Usuário + Senha
 
-### Dashboard
-- `GET /api/dashboard/stats` - Estatísticas
-- `GET /api/dashboard/equipamentos` - Stats por equipamento
+### Mimosa (C5C/C5X/B5C)
+- **Protocolo**: HTTP/HTTPS
+- **Arquivo**: mimosa.conf
+- **Autenticação**: Apenas Senha
 
-## 🛡️ Segurança
+## 🐳 Docker
 
-- Senhas com hash bcrypt
-- Validação de arquivos (extensões: .zip, .tar.gz, .bak)
-- Limite de tamanho: 100MB
-- Sanitização de inputs
-- Proteção contra XSS e SQL Injection
-- Headers de segurança com Helmet
+### Serviços Disponíveis
 
-## 📱 Identidade Visual
+- **backend**: API Node.js (porta 3001)
+- **frontend**: Interface React + Nginx (porta 3000)
+- **nginx-proxy**: Proxy reverso com SSL (portas 80/443)
 
-- **Nome**: Y BACK
-- **Cores**: Preto, branco, cinza escuro/claro
-- **Fonte**: Inter
-- **Estilo**: Moderna, minimalista, corporativa
+### Comandos Úteis
 
-## 🔗 URLs
+```bash
+# Ver logs
+docker-compose logs -f
 
-- **Frontend**: http://localhost:3000
-- **Backend**: http://localhost:3001
-- **API**: http://localhost:3001/api
+# Rebuild após mudanças
+docker-compose build --no-cache
+
+# Parar serviços
+docker-compose down
+
+# Limpar volumes (CUIDADO: apaga dados)
+docker-compose down -v
+```
+
+## 📁 Estrutura do Projeto
+
+```
+BACKUP3.0/
+├── backend/                 # API Node.js
+│   ├── src/
+│   │   ├── controllers/    # Controladores da API
+│   │   ├── services/       # Lógica de negócio
+│   │   ├── models/         # Modelos do banco de dados
+│   │   └── utils/          # Utilitários
+│   └── Dockerfile
+├── frontend/               # Interface React
+│   ├── src/
+│   │   ├── components/     # Componentes React
+│   │   ├── pages/         # Páginas da aplicação
+│   │   └── services/      # Serviços HTTP
+│   ├── nginx.conf
+│   └── Dockerfile
+├── nginx/                  # Configuração Nginx
+│   └── nginx.conf
+└── docker-compose.yml
+```
+
+## 🔒 Segurança
+
+- Headers de segurança configurados no Nginx
+- Rate limiting para APIs
+- Validação de entrada em todas as rotas
+- Credenciais criptografadas no banco de dados
+- Suporte para SSL/TLS
+
+## 📈 Monitoramento
+
+- Health checks configurados nos containers
+- Logs estruturados
+- Métricas de backup (sucessos/falhas)
+
+## 🤝 Contribuição
+
+1. Fork o projeto
+2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
+3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
+4. Push para a branch (`git push origin feature/AmazingFeature`)
+5. Abra um Pull Request
 
 ## 📄 Licença
 
-Este projeto foi desenvolvido seguindo as especificações do claude.md para uso interno.
+Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para mais detalhes.
+
+## 📞 Suporte
+
+Para dúvidas ou problemas:
+- Abra uma issue no GitHub
+- Consulte a documentação dos equipamentos suportados
+- Verifique os logs do Docker para debugging
+
+---
+
+**Desenvolvido para simplificar o gerenciamento de backups em redes de telecomunicações.**

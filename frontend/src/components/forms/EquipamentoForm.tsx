@@ -105,13 +105,25 @@ export function EquipamentoForm({
           required
         >
           <option value="">Selecione o tipo</option>
-          <option value="Router">Router</option>
-          <option value="Switch">Switch</option>
-          <option value="Firewall">Firewall</option>
-          <option value="Access Point">Access Point</option>
-          <option value="Servidor">Servidor</option>
-          <option value="Modem">Modem</option>
-          <option value="Outros">Outros</option>
+          <optgroup label="Equipamentos de Rede">
+            <option value="Router">Router</option>
+            <option value="Switch">Switch</option>
+            <option value="Firewall">Firewall</option>
+            <option value="Access Point">Access Point</option>
+            <option value="Modem">Modem</option>
+          </optgroup>
+          <optgroup label="Equipamentos Específicos">
+            <option value="Mikrotik">Mikrotik</option>
+            <option value="Ubiquiti">Ubiquiti</option>
+            <option value="Mimosa">Mimosa</option>
+            <option value="Huawei NE">Huawei NE*</option>
+            <option value="OLT FiberHome">OLT FiberHome</option>
+            <option value="OLT Parks">OLT Parks</option>
+          </optgroup>
+          <optgroup label="Outros">
+            <option value="Servidor">Servidor</option>
+            <option value="Outros">Outros</option>
+          </optgroup>
         </select>
         {errors.tipo && (
           <p className="mt-1 text-sm text-red-600">{errors.tipo}</p>

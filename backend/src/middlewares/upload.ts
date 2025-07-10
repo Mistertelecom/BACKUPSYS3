@@ -2,7 +2,31 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 
-const allowedExtensions = process.env.ALLOWED_EXTENSIONS?.split(',') || ['.zip', '.tar.gz', '.bak'];
+// Configuração específica para equipamentos de rede
+const networkEquipmentExtensions = [
+  // Formatos gerais
+  '.zip', '.tar.gz', '.bak', '.backup',
+  
+  // Mikrotik
+  '.rsc', '.export', '.backup',
+  
+  // Ubiquiti
+  '.cfg', '.json', '.backup',
+  
+  // Mimosa
+  '.cfg', '.json', '.backup',
+  
+  // Huawei NE*
+  '.cfg', '.dat', '.zip', '.tar', '.xml', '.backup',
+  
+  // OLT FiberHome
+  '.cfg', '.db', '.backup', '.dat', '.xml',
+  
+  // OLT Parks
+  '.cfg', '.backup', '.dat', '.xml'
+];
+
+const allowedExtensions = process.env.ALLOWED_EXTENSIONS?.split(',') || networkEquipmentExtensions;
 const maxFileSize = parseInt(process.env.MAX_FILE_SIZE || '104857600'); // 100MB default
 
 const storage = multer.diskStorage({
@@ -26,14 +50,42 @@ const storage = multer.diskStorage({
   }
 });
 
+// Mapa de tipos de equipamento para extensões específicas
+const equipmentTypeExtensions = {
+  'mikrotik': ['.rsc', '.export', '.backup', '.cfg'],
+  'ubiquiti': ['.cfg', '.json', '.backup', '.unf'],
+  'mimosa': ['.cfg', '.json', '.backup'],
+  'huawei': ['.cfg', '.dat', '.zip', '.tar', '.xml', '.backup'],
+  'fiberhome': ['.cfg', '.db', '.backup', '.dat', '.xml'],
+  'parks': ['.cfg', '.backup', '.dat', '.xml']
+};
+
 const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
   const fileExtension = path.extname(file.originalname).toLowerCase();
+  const fileName = file.originalname.toLowerCase();
   
+  // Verificar se é uma extensão permitida
   if (allowedExtensions.includes(fileExtension)) {
     cb(null, true);
-  } else {
-    cb(new Error(`Extensão de arquivo não permitida. Permitidas: ${allowedExtensions.join(', ')}`));
+    return;
   }
+  
+  // Verificar se é um arquivo sem extensão mas com padrão conhecido
+  if (!fileExtension) {
+    // Arquivos Mikrotik podem não ter extensão
+    if (fileName.includes('export') || fileName.includes('backup') || fileName.includes('config')) {
+      cb(null, true);
+      return;
+    }
+  }
+  
+  // Verificar extensões compostas como .tar.gz
+  if (fileName.endsWith('.tar.gz') || fileName.endsWith('.tar.bz2')) {
+    cb(null, true);
+    return;
+  }
+  
+  cb(new Error(`Extensão de arquivo não permitida. Permitidas: ${allowedExtensions.join(', ')}`));
 };
 
 export const upload = multer({

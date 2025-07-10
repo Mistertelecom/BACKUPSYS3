@@ -137,3 +137,62 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Database files
+*.sqlite
+*.sqlite3
+*.db
+/backend/database/
+database.sqlite
+
+# Backup files
+/backend/auto_backups/
+/backend/uploads/
+auto_backups/
+uploads/
+
+# Production builds
+/frontend/dist
+/frontend/build
+/backend/dist
+/backend/build
+
+# VS Code
+.vscode/
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# SSL certificates
+nginx/ssl/
+*.pem
+*.key
+*.crt
+
+# Backup configurations (may contain sensitive data)
+*.backup
+*.bak
+
+# SSH keys
+*.ppk
+id_rsa*
+id_dsa*
+id_ecdsa*
+id_ed25519*
+
+# Configuration with secrets
+config/production.json
+config/secrets.json

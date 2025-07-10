@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { Server, HardDrive, Users, Activity, Download, Settings, CheckCircle, AlertCircle, Cloud, Clock, Calendar, Play, Pause, XCircle, TrendingUp, Database, Zap } from 'lucide-react';
+import { Server, HardDrive, Users, Activity, Download, CheckCircle, AlertCircle, Cloud, Clock, Calendar, Play, Pause, XCircle, TrendingUp, Database } from 'lucide-react';
 import { dashboardAPI, backupsAPI, backupJobsAPI } from '../services/api';
 
 interface DashboardStats {
@@ -123,18 +123,6 @@ export function DashboardPage() {
     return { color: 'text-red-600', bgColor: 'bg-red-100', icon: AlertCircle, label: 'Problema' };
   };
 
-  const getJobStatusColor = (status: string) => {
-    switch (status) {
-      case 'active':
-        return 'text-green-600 bg-green-100';
-      case 'paused':
-        return 'text-yellow-600 bg-yellow-100';
-      case 'scheduled':
-        return 'text-blue-600 bg-blue-100';
-      default:
-        return 'text-gray-600 bg-gray-100';
-    }
-  };
 
   if (isLoading) {
     return (

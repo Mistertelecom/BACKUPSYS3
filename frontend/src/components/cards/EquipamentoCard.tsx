@@ -1,9 +1,11 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
-import { Server, Edit, Trash2, Upload, Eye, Cloud, HardDrive } from 'lucide-react';
+import { Server, Edit, Trash2, Upload, Eye, Cloud, HardDrive, ExternalLink, Cog } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Modal } from '../ui/Modal';
 import { FileUploader } from '../ui/FileUploader';
+import { AutoBackupConfigModal } from '../modals/AutoBackupConfigModal';
 import { backupsAPI, providersAPI } from '../../services/api';
 
 interface Equipamento {
@@ -13,6 +15,13 @@ interface Equipamento {
   tipo: string;
   created_at: string;
   backup_count: number;
+  ssh_enabled?: boolean;
+  ssh_port?: number;
+  ssh_username?: string;
+  ssh_password?: string;
+  ssh_private_key?: string;
+  auto_backup_enabled?: boolean;
+  auto_backup_schedule?: string;
 }
 
 interface Provider {
@@ -31,12 +40,15 @@ interface EquipamentoCardProps {
 }
 
 export function EquipamentoCard({ equipamento, onEdit, onDelete, onViewBackups }: EquipamentoCardProps) {
+  const navigate = useNavigate();
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showAutoBackupModal, setShowAutoBackupModal] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [providers, setProviders] = useState<Provider[]>([]);
   const [selectedProvider, setSelectedProvider] = useState<number | null>(null);
   const [isLoadingProviders, setIsLoadingProviders] = useState(false);
+  const [currentEquipamento, setCurrentEquipamento] = useState<Equipamento>(equipamento);
 
   const fetchProviders = async () => {
     setIsLoadingProviders(true);
@@ -174,25 +186,47 @@ export function EquipamentoCard({ equipamento, onEdit, onDelete, onViewBackups }
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleOpenUploadModal}
-              className="flex-1"
-            >
-              <Upload className="h-4 w-4 mr-2" />
-              Upload
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onViewBackups(equipamento)}
-              className="flex-1"
-            >
-              <Eye className="h-4 w-4 mr-2" />
-              Ver Backups
-            </Button>
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleOpenUploadModal}
+                className="flex-1"
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                Upload
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onViewBackups(equipamento)}
+                className="flex-1"
+              >
+                <Eye className="h-4 w-4 mr-2" />
+                Ver Backups
+              </Button>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate(`/equipamentos/${equipamento.id}/upload`)}
+                className="flex-1"
+              >
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Upload Avançado
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowAutoBackupModal(true)}
+                className={`flex-1 ${currentEquipamento.auto_backup_enabled ? 'bg-green-50 border-green-300 text-green-700' : ''}`}
+              >
+                <Cog className="h-4 w-4 mr-2" />
+                Auto Backup
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -292,6 +326,20 @@ export function EquipamentoCard({ equipamento, onEdit, onDelete, onViewBackups }
           </div>
         </div>
       </Modal>
+
+      {/* Auto Backup Configuration Modal */}
+      <AutoBackupConfigModal
+        isOpen={showAutoBackupModal}
+        onClose={() => setShowAutoBackupModal(false)}
+        equipamento={currentEquipamento}
+        onSave={(updatedEquipamento) => {
+          setCurrentEquipamento({
+            ...currentEquipamento,
+            ...updatedEquipamento
+          });
+          setShowAutoBackupModal(false);
+        }}
+      />
     </>
   );
 }

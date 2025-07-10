@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { body, validationResult } from 'express-validator';
 import { EquipamentoModel } from '../models/Equipamento';
 import { BackupModel } from '../models/Backup';
+import { schedulerService } from '../services/SchedulerService';
 
 export const equipamentoValidation = [
   body('nome').notEmpty().withMessage('Nome é obrigatório'),
@@ -83,6 +84,10 @@ export class EquipamentoController {
   static async delete(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
+      
+      // Remover job de backup automatizado do scheduler antes de deletar
+      await schedulerService.removeAutoBackupJob(parseInt(id));
+      
       const deleted = await EquipamentoModel.delete(parseInt(id));
       
       if (!deleted) {

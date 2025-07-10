@@ -51,9 +51,12 @@ export const backupsAPI = {
   getAll: () => api.get('/backups'),
   getById: (id: number) => api.get(`/backups/${id}`),
   getRecent: (limit?: number) => api.get(`/backups/recent${limit ? `?limit=${limit}` : ''}`),
-  upload: (equipamentoId: number, file: File) => {
+  upload: (equipamentoId: number, file: File, providerId?: number) => {
     const formData = new FormData();
     formData.append('backup', file);
+    if (providerId) {
+      formData.append('providerId', providerId.toString());
+    }
     return api.post(`/backups/equipamento/${equipamentoId}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
@@ -67,4 +70,31 @@ export const backupsAPI = {
 export const dashboardAPI = {
   getStats: () => api.get('/dashboard/stats'),
   getEquipamentoStats: () => api.get('/dashboard/equipamentos'),
+  getProviderHealth: () => api.get('/dashboard/providers/health'),
+  getBackupJobsStats: () => api.get('/dashboard/backup-jobs/stats'),
+};
+
+export const providersAPI = {
+  getAll: () => api.get('/providers'),
+  getById: (id: number) => api.get(`/providers/${id}`),
+  getActive: () => api.get('/providers/active'),
+  create: (data: any) => api.post('/providers', data),
+  update: (id: number, data: any) => api.put(`/providers/${id}`, data),
+  delete: (id: number) => api.delete(`/providers/${id}`),
+  toggleActive: (id: number) => api.post(`/providers/${id}/toggle`),
+  testConnection: (id: number) => api.post(`/providers/${id}/test`),
+};
+
+export const backupJobsAPI = {
+  getAll: () => api.get('/backup-jobs'),
+  getById: (id: number) => api.get(`/backup-jobs/${id}`),
+  getStats: () => api.get('/backup-jobs/stats'),
+  getByEquipamento: (equipamentoId: number) => api.get(`/backup-jobs/equipamento/${equipamentoId}`),
+  create: (data: any) => api.post('/backup-jobs', data),
+  update: (id: number, data: any) => api.put(`/backup-jobs/${id}`, data),
+  delete: (id: number) => api.delete(`/backup-jobs/${id}`),
+  pause: (id: number) => api.post(`/backup-jobs/${id}/pause`),
+  resume: (id: number) => api.post(`/backup-jobs/${id}/resume`),
+  runNow: (id: number) => api.post(`/backup-jobs/${id}/run`),
+  validateCron: (pattern: string) => api.post('/backup-jobs/validate-cron', { pattern }),
 };

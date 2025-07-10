@@ -47,19 +47,27 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <div className="mx-auto w-20 h-20 bg-white rounded-2xl flex items-center justify-center mb-6">
+          <div className="mx-auto w-20 h-20 bg-white rounded-2xl flex items-center justify-center mb-6 shadow-lg">
             <span className="text-gray-900 font-bold text-3xl">Y</span>
           </div>
           <h1 className="text-4xl font-bold text-white mb-2">Y BACK</h1>
           <p className="text-gray-400 text-sm">Sistema de Backup para Equipamentos</p>
         </div>
 
-        <div className="card bg-white">
-          <div className="card-body">
-            <form className="space-y-4" onSubmit={handleSubmit}>
+        <div className="bg-white rounded-lg shadow-xl border border-gray-200">
+          <div className="p-8">
+            <div className="mb-6">
+              <h2 className="text-2xl font-semibold text-gray-900 text-center mb-2">
+                Bem-vindo de volta
+              </h2>
+              <p className="text-gray-600 text-center text-sm">
+                Faça login para acessar o sistema
+              </p>
+            </div>
+            <form className="space-y-6" onSubmit={handleSubmit}>
               <InputField
                 label="Username"
                 type="text"
@@ -90,10 +98,16 @@ export function LoginPage() {
               </Button>
             </form>
 
-            <div className="mt-6 text-center">
-              <p className="text-xs text-gray-500">
-                Usuário padrão: <span className="font-medium">admin</span> / <span className="font-medium">admin123</span>
-              </p>
+            <div className="mt-8 text-center">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p className="text-sm text-blue-800 font-medium mb-1">
+                  Credenciais de teste
+                </p>
+                <p className="text-xs text-blue-600">
+                  Usuário: <span className="font-mono font-medium">admin</span> • 
+                  Senha: <span className="font-mono font-medium">admin123</span>
+                </p>
+              </div>
             </div>
           </div>
         </div>

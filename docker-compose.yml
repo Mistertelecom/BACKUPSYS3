@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: yback-backend
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./backend/database:/app/database
+      - ./backend/auto_backups:/app/auto_backups
+      - ./backend/uploads:/app/uploads
+    environment:
+      - NODE_ENV=production
+      - DATABASE_PATH=/app/database/database.sqlite
+      - AUTO_BACKUP_DIR=/app/auto_backups
+      - PORT=3001
+    networks:
+      - yback-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Frontend React
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: yback-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - yback-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Nginx Proxy (opcional - para produção)
+  nginx-proxy:
+    image: nginx:alpine
+    container_name: yback-proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - yback-network
+    profiles:
+      - production
+
+networks:
+  yback-network:
+    driver: bridge
+    name: yback-network
+
+volumes:
+  yback-data:
+    name: yback-data

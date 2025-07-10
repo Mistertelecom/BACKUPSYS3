@@ -8,5 +8,7 @@ router.use(authenticateToken);
 
 router.get('/stats', DashboardController.getStats);
 router.get('/equipamentos', DashboardController.getEquipamentoStats);
+router.get('/providers/health', DashboardController.getProviderHealth);
+router.get('/backup-jobs/stats', DashboardController.getBackupJobsStats);
 
 export default router;
