@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { Search, Download, Trash2, HardDrive, Filter, BarChart3, FileText } from 'lucide-react';
+import { Search, Download, Trash2, HardDrive, Filter, BarChart3, FileText, Clock } from 'lucide-react';
 import { backupsAPI } from '../services/api';
 import { Button } from '../components/ui/Button';
 import { BackupStats } from '../components/dashboard/BackupStats';
 import { UsageReport } from '../components/reports/UsageReport';
+import { BackupTimeline } from '../components/analysis/BackupTimeline';
 
 interface Backup {
   id: number;
@@ -25,6 +26,7 @@ export function BackupsPage() {
   const [filterType, setFilterType] = useState('');
   const [showStats, setShowStats] = useState(false);
   const [showUsageReport, setShowUsageReport] = useState(false);
+  const [showTimeline, setShowTimeline] = useState(false);
 
   const fetchBackups = async () => {
     try {
@@ -129,6 +131,7 @@ export function BackupsPage() {
             onClick={() => {
               setShowStats(!showStats);
               if (showUsageReport) setShowUsageReport(false);
+              if (showTimeline) setShowTimeline(false);
             }}
             className="flex items-center space-x-2"
           >
@@ -141,11 +144,25 @@ export function BackupsPage() {
             onClick={() => {
               setShowUsageReport(!showUsageReport);
               if (showStats) setShowStats(false);
+              if (showTimeline) setShowTimeline(false);
             }}
             className="flex items-center space-x-2"
           >
             <FileText className="h-4 w-4" />
             <span>{showUsageReport ? 'Ocultar' : 'Relatório'} de Uso</span>
+          </Button>
+
+          <Button
+            variant={showTimeline ? "default" : "outline"}
+            onClick={() => {
+              setShowTimeline(!showTimeline);
+              if (showStats) setShowStats(false);
+              if (showUsageReport) setShowUsageReport(false);
+            }}
+            className="flex items-center space-x-2"
+          >
+            <Clock className="h-4 w-4" />
+            <span>{showTimeline ? 'Ocultar' : 'Timeline'}</span>
           </Button>
           
           <div className="text-sm text-gray-500">
@@ -202,6 +219,11 @@ export function BackupsPage() {
       {/* Relatório de Uso */}
       {showUsageReport && (
         <UsageReport backups={backups} />
+      )}
+
+      {/* Timeline de Backups */}
+      {showTimeline && (
+        <BackupTimeline backups={backups} />
       )}
 
       {filteredBackups.length === 0 ? (
