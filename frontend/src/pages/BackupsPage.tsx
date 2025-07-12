@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { Search, Download, Trash2, HardDrive, Filter, BarChart3, FileText, Clock } from 'lucide-react';
+import { Search, Download, Trash2, HardDrive, Filter, BarChart3, FileText, Clock, Shield } from 'lucide-react';
 import { backupsAPI } from '../services/api';
 import { Button } from '../components/ui/Button';
 import { BackupStats } from '../components/dashboard/BackupStats';
 import { UsageReport } from '../components/reports/UsageReport';
 import { BackupTimeline } from '../components/analysis/BackupTimeline';
+import { IntegrityChecker } from '../components/integrity/IntegrityChecker';
 
 interface Backup {
   id: number;
@@ -27,6 +28,7 @@ export function BackupsPage() {
   const [showStats, setShowStats] = useState(false);
   const [showUsageReport, setShowUsageReport] = useState(false);
   const [showTimeline, setShowTimeline] = useState(false);
+  const [showIntegrityChecker, setShowIntegrityChecker] = useState(false);
 
   const fetchBackups = async () => {
     try {
@@ -125,13 +127,14 @@ export function BackupsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Backups</h1>
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-2">
           <Button
             variant={showStats ? "default" : "outline"}
             onClick={() => {
               setShowStats(!showStats);
               if (showUsageReport) setShowUsageReport(false);
               if (showTimeline) setShowTimeline(false);
+              if (showIntegrityChecker) setShowIntegrityChecker(false);
             }}
             className="flex items-center space-x-2"
           >
@@ -145,6 +148,7 @@ export function BackupsPage() {
               setShowUsageReport(!showUsageReport);
               if (showStats) setShowStats(false);
               if (showTimeline) setShowTimeline(false);
+              if (showIntegrityChecker) setShowIntegrityChecker(false);
             }}
             className="flex items-center space-x-2"
           >
@@ -158,11 +162,26 @@ export function BackupsPage() {
               setShowTimeline(!showTimeline);
               if (showStats) setShowStats(false);
               if (showUsageReport) setShowUsageReport(false);
+              if (showIntegrityChecker) setShowIntegrityChecker(false);
             }}
             className="flex items-center space-x-2"
           >
             <Clock className="h-4 w-4" />
             <span>{showTimeline ? 'Ocultar' : 'Timeline'}</span>
+          </Button>
+
+          <Button
+            variant={showIntegrityChecker ? "default" : "outline"}
+            onClick={() => {
+              setShowIntegrityChecker(!showIntegrityChecker);
+              if (showStats) setShowStats(false);
+              if (showUsageReport) setShowUsageReport(false);
+              if (showTimeline) setShowTimeline(false);
+            }}
+            className="flex items-center space-x-2"
+          >
+            <Shield className="h-4 w-4" />
+            <span>{showIntegrityChecker ? 'Ocultar' : 'Integridade'}</span>
           </Button>
           
           <div className="text-sm text-gray-500">
@@ -224,6 +243,11 @@ export function BackupsPage() {
       {/* Timeline de Backups */}
       {showTimeline && (
         <BackupTimeline backups={backups} />
+      )}
+
+      {/* Verificação de Integridade */}
+      {showIntegrityChecker && (
+        <IntegrityChecker backups={backups} />
       )}
 
       {filteredBackups.length === 0 ? (
