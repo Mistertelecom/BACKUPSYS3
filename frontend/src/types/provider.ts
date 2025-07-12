@@ -1,7 +1,7 @@
 export interface Provider {
   id: number;
   name: string;
-  type: 'local' | 'aws-s3' | 'gcs';
+  type: 'local' | 'aws-s3' | 'gcs' | 'dropbox' | 'google-drive';
   config: string;
   is_active: boolean;
   created_at: string;
@@ -31,10 +31,29 @@ export interface GCSConfig {
   credentials?: object;
 }
 
+export interface DropboxConfig {
+  accessToken: string;
+  refreshToken?: string;
+  appKey?: string;
+  appSecret?: string;
+  folderPath?: string;
+}
+
+export interface GoogleDriveConfig {
+  clientId: string;
+  clientSecret: string;
+  refreshToken: string;
+  accessToken?: string;
+  folderId?: string;
+  folderName?: string;
+}
+
 export const PROVIDER_TYPES = {
   local: 'Local Storage',
   'aws-s3': 'AWS S3',
-  gcs: 'Google Cloud Storage'
+  gcs: 'Google Cloud Storage',
+  dropbox: 'Dropbox',
+  'google-drive': 'Google Drive'
 } as const;
 
 export const AWS_REGIONS = [

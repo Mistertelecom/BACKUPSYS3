@@ -5,8 +5,11 @@ import { EquipamentosPage } from '../pages/EquipamentosPage';
 import { BackupsPage } from '../pages/BackupsPage';
 import { ProvidersPage } from '../pages/ProvidersPage';
 import { UploadBackupPage } from '../pages/UploadBackupPage';
+import { IntegrationPage } from '../pages/IntegrationPage';
+import UsersPage from '../pages/UsersPage';
 import { Layout } from '../components/layout/Layout';
 import { ProtectedRoute } from '../components/ProtectedRoute';
+import { AdminRoute } from '../components/AdminRoute';
 
 export function AppRoutes() {
   return (
@@ -27,6 +30,8 @@ export function AppRoutes() {
         <Route path="equipamentos/:equipamentoId/upload" element={<UploadBackupPage />} />
         <Route path="backups" element={<BackupsPage />} />
         <Route path="providers" element={<ProvidersPage />} />
+        <Route path="integration" element={<IntegrationPage />} />
+        <Route path="users" element={<AdminRoute><UsersPage /></AdminRoute>} />
       </Route>
     </Routes>
   );

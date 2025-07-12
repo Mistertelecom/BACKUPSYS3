@@ -11,6 +11,11 @@ export interface Backup {
   checksum?: string;
   status: string;
   data_upload?: string;
+  sync_status?: string;
+  last_sync_date?: string;
+  sync_provider_id?: number;
+  sync_provider_path?: string;
+  sync_error?: string;
 }
 
 export class BackupModel {
@@ -201,6 +206,34 @@ export class BackupModel {
             metadata: row.metadata ? JSON.parse(row.metadata) : null
           }));
           resolve(backups);
+        }
+      });
+    });
+  }
+
+  static async updateSyncStatus(
+    id: number, 
+    status: string, 
+    providerId: number, 
+    syncPath?: string | null, 
+    error?: string | null
+  ): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      const sql = `
+        UPDATE backups 
+        SET sync_status = ?, 
+            last_sync_date = CURRENT_TIMESTAMP, 
+            sync_provider_id = ?, 
+            sync_provider_path = ?, 
+            sync_error = ?
+        WHERE id = ?
+      `;
+      
+      database.getDatabase().run(sql, [status, providerId, syncPath, error, id], function(err) {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(this.changes > 0);
         }
       });
     });

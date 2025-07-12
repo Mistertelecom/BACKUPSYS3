@@ -12,6 +12,8 @@ import providerRoutes from './routes/providers';
 import backupJobRoutes from './routes/backupJobs';
 import infoRoutes from './routes/info';
 import autoBackupRoutes from './routes/autoBackup';
+import integrationRoutes from './routes/integration';
+import userRoutes from './routes/users';
 import { schedulerService } from './services/SchedulerService';
 
 dotenv.config();
@@ -46,6 +48,8 @@ app.use('/api/providers', providerRoutes);
 app.use('/api/backup-jobs', backupJobRoutes);
 app.use('/api/info', infoRoutes);
 app.use('/api/auto-backup', autoBackupRoutes);
+app.use('/api/integration', integrationRoutes);
+app.use('/api/users', userRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ 

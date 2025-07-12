@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { HardDrive, Database, TrendingUp, AlertCircle, Download } from 'lucide-react';
 import { Button } from '../ui/Button';
+import { formatFileSize } from '../../utils/cn';
 
 interface UsageData {
   equipmentUsage: Array<{
@@ -48,17 +49,23 @@ export function UsageReport({ backups }: UsageReportProps) {
 
   const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4'];
 
-  const formatSize = (bytes: number): string => {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
-
-  const generateMockSize = (): number => {
-    // Gerar tamanhos realistas para backups (5MB - 500MB)
-    return Math.floor(Math.random() * (500 * 1024 * 1024 - 5 * 1024 * 1024) + 5 * 1024 * 1024);
+  const getFileSize = (backup: any): number => {
+    // Use actual file size from database if available
+    if (backup.file_size && backup.file_size > 0) {
+      return backup.file_size;
+    }
+    // Fallback to estimated size based on filename extension
+    const extension = backup.nome_arquivo.split('.').pop()?.toLowerCase();
+    const estimatedSizes: { [key: string]: number } = {
+      'zip': 50 * 1024 * 1024,    // 50MB
+      'tar.gz': 80 * 1024 * 1024, // 80MB
+      'tgz': 80 * 1024 * 1024,    // 80MB
+      'bak': 100 * 1024 * 1024,   // 100MB
+      'sql': 20 * 1024 * 1024,    // 20MB
+      'db': 150 * 1024 * 1024,    // 150MB
+      'backup': 200 * 1024 * 1024 // 200MB
+    };
+    return estimatedSizes[extension || ''] || 75 * 1024 * 1024; // Default 75MB
   };
 
   useEffect(() => {
@@ -68,7 +75,7 @@ export function UsageReport({ backups }: UsageReportProps) {
     const equipmentMap = new Map();
     backups.forEach(backup => {
       const key = `${backup.equipamento_nome} (${backup.equipamento_ip})`;
-      const size = generateMockSize();
+      const size = getFileSize(backup);
       
       if (!equipmentMap.has(key)) {
         equipmentMap.set(key, {
@@ -100,7 +107,7 @@ export function UsageReport({ backups }: UsageReportProps) {
     const typeMap = new Map();
     backups.forEach(backup => {
       const type = backup.equipamento_tipo;
-      const size = generateMockSize();
+      const size = getFileSize(backup);
       
       if (!typeMap.has(type)) {
         typeMap.set(type, { count: 0, size: 0 });
@@ -135,7 +142,7 @@ export function UsageReport({ backups }: UsageReportProps) {
       if (monthlyMap.has(monthKey)) {
         const monthData = monthlyMap.get(monthKey);
         monthData.backupCount++;
-        monthData.totalSize += generateMockSize();
+        monthData.totalSize += getFileSize(backup);
       }
     });
 
@@ -246,7 +253,7 @@ export function UsageReport({ backups }: UsageReportProps) {
             <div>
               <p className="text-sm text-gray-500">Espaço Usado</p>
               <p className="text-2xl font-bold text-gray-900">
-                {formatSize(usageData.totalStorage.used * 1024 * 1024 * 1024)}
+                {formatFileSize(usageData.totalStorage.used * 1024 * 1024 * 1024)}
               </p>
             </div>
             <div className="p-3 bg-blue-100 rounded-full">
@@ -257,7 +264,7 @@ export function UsageReport({ backups }: UsageReportProps) {
           <div className="mt-4">
             <div className="flex justify-between text-sm text-gray-600 mb-1">
               <span>{usageData.totalStorage.percentage.toFixed(1)}% usado</span>
-              <span>{formatSize(usageData.totalStorage.total * 1024 * 1024 * 1024)} total</span>
+              <span>{formatFileSize(usageData.totalStorage.total * 1024 * 1024 * 1024)} total</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
               <div 
@@ -279,7 +286,7 @@ export function UsageReport({ backups }: UsageReportProps) {
                 {usageData.equipmentUsage[0]?.name.split(' (')[0] || 'N/A'}
               </p>
               <p className="text-sm text-gray-500">
-                {usageData.equipmentUsage[0] ? formatSize(usageData.equipmentUsage[0].totalSize) : '0 B'}
+                {usageData.equipmentUsage[0] ? formatFileSize(usageData.equipmentUsage[0].totalSize) : '0 B'}
               </p>
             </div>
             <div className="p-3 bg-yellow-100 rounded-full">
@@ -339,12 +346,12 @@ export function UsageReport({ backups }: UsageReportProps) {
                       {equipment.name}
                     </span>
                     <span className="text-sm text-gray-500">
-                      {formatSize(equipment.totalSize)}
+                      {formatFileSize(equipment.totalSize)}
                     </span>
                   </div>
                   <div className="flex justify-between text-xs text-gray-500 mb-2">
                     <span>{equipment.backupCount} backups</span>
-                    <span>Média: {formatSize(equipment.avgSize)}</span>
+                    <span>Média: {formatFileSize(equipment.avgSize)}</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div 
@@ -378,7 +385,7 @@ export function UsageReport({ backups }: UsageReportProps) {
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value: any) => formatSize(value)} />
+                  <Tooltip formatter={(value: any) => formatFileSize(value)} />
                 </PieChart>
               </ResponsiveContainer>
               
@@ -394,7 +401,7 @@ export function UsageReport({ backups }: UsageReportProps) {
                     </div>
                     <div className="text-right">
                       <div className="text-sm font-medium text-gray-900">
-                        {formatSize(type.size)}
+                        {formatFileSize(type.size)}
                       </div>
                       <div className="text-xs text-gray-500">
                         {type.count} backup(s)

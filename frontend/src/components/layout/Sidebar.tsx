@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Server, HardDrive, LogOut, Settings } from 'lucide-react';
+import { Home, Server, HardDrive, LogOut, Settings, Shield, Users } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { cn } from '../../utils/cn';
 
@@ -8,6 +8,11 @@ const navigation = [
   { name: 'Equipamentos', href: '/equipamentos', icon: Server },
   { name: 'Backups', href: '/backups', icon: HardDrive },
   { name: 'Providers', href: '/providers', icon: Settings },
+  { name: 'Integração', href: '/integration', icon: Shield },
+];
+
+const adminNavigation = [
+  { name: 'Usuários', href: '/users', icon: Users },
 ];
 
 export function Sidebar() {
@@ -50,6 +55,38 @@ export function Sidebar() {
             </Link>
           );
         })}
+
+        {/* Admin Navigation */}
+        {user?.role === 'admin' && (
+          <>
+            <div className="pt-4 pb-2">
+              <div className="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                Administração
+              </div>
+            </div>
+            {adminNavigation.map((item) => {
+              const Icon = item.icon;
+              const isActive = location.pathname === item.href;
+              
+              return (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  className={cn(
+                    'flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200',
+                    {
+                      'bg-gray-800 text-white shadow-lg': isActive,
+                      'text-gray-300 hover:bg-gray-700 hover:text-white': !isActive,
+                    }
+                  )}
+                >
+                  <Icon className="mr-3 h-5 w-5" />
+                  {item.name}
+                </Link>
+              );
+            })}
+          </>
+        )}
       </nav>
 
       <div className="p-4 border-t border-gray-700">
@@ -61,7 +98,7 @@ export function Sidebar() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">{user?.username}</p>
-            <p className="text-xs text-gray-400">Logado</p>
+            <p className="text-xs text-gray-400 capitalize">{user?.role || 'Usuário'}</p>
           </div>
         </div>
         

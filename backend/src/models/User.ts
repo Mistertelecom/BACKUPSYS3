@@ -5,13 +5,16 @@ export interface User {
   id?: number;
   username: string;
   password: string;
+  role?: string;
+  is_active?: boolean;
   created_at?: string;
+  updated_at?: string;
 }
 
 export class UserModel {
   static async findByUsername(username: string): Promise<User | null> {
     return new Promise((resolve, reject) => {
-      const sql = 'SELECT * FROM users WHERE username = ?';
+      const sql = 'SELECT * FROM users WHERE username = ? AND is_active = 1';
       
       database.getDatabase().get(sql, [username], (err, row: User) => {
         if (err) {
@@ -25,7 +28,7 @@ export class UserModel {
 
   static async findById(id: number): Promise<User | null> {
     return new Promise((resolve, reject) => {
-      const sql = 'SELECT * FROM users WHERE id = ?';
+      const sql = 'SELECT * FROM users WHERE id = ? AND is_active = 1';
       
       database.getDatabase().get(sql, [id], (err, row: User) => {
         if (err) {

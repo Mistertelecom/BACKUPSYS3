@@ -5,7 +5,7 @@ import { providerService } from '../services/ProviderService';
 
 export const providerValidation = [
   body('name').notEmpty().withMessage('Nome é obrigatório'),
-  body('type').isIn(['local', 'aws-s3', 'gcs']).withMessage('Tipo de provider inválido'),
+  body('type').isIn(['local', 'aws-s3', 'gcs', 'dropbox', 'google-drive']).withMessage('Tipo de provider inválido'),
   body('config').isObject().withMessage('Configuração deve ser um objeto válido')
 ];
 
@@ -168,15 +168,23 @@ export class ProviderController {
         return;
       }
 
-      const isConnected = await providerService.testProviderConnection(provider);
+      console.log(`🔍 Testando conexão do provider: ${provider.name} (${provider.type})`);
       
-      res.json({ 
-        success: isConnected,
-        message: isConnected ? 'Conexão bem-sucedida' : 'Falha na conexão'
-      });
+      const testResult = await providerService.testProviderConnection(provider);
+      
+      console.log(`📊 Resultado do teste: ${testResult.success ? '✅ Sucesso' : '❌ Falha'}`);
+      if (!testResult.success && testResult.error) {
+        console.error(`❌ Erro detalhado: ${testResult.error}`);
+      }
+      
+      res.json(testResult);
     } catch (error) {
-      console.error('Erro ao testar conexão do provider:', error);
-      res.status(500).json({ error: 'Erro interno do servidor' });
+      console.error('❌ Erro crítico ao testar conexão do provider:', error);
+      res.status(500).json({ 
+        success: false,
+        error: 'Erro interno do servidor',
+        details: error instanceof Error ? error.message : 'Erro desconhecido'
+      });
     }
   }
 }

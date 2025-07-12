@@ -4,6 +4,8 @@ import { EquipamentoModel } from '../models/Equipamento';
 import { ProviderModel } from '../models/Provider';
 import { providerService } from '../services/ProviderService';
 import { FileTypeDetector } from '../utils/fileTypeDetector';
+import { DropboxProvider } from '../services/providers/DropboxProvider';
+import { GoogleDriveProvider } from '../services/providers/GoogleDriveProvider';
 import path from 'path';
 import fs from 'fs';
 
@@ -239,6 +241,136 @@ export class BackupController {
     } catch (error) {
       console.error('Erro ao buscar backups recentes:', error);
       res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  }
+
+  static async syncToCloud(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const { provider_id } = req.body;
+      
+      const backupId = parseInt(id);
+      const providerId = parseInt(provider_id);
+      
+      if (isNaN(backupId) || isNaN(providerId)) {
+        res.status(400).json({ 
+          success: false, 
+          error: 'IDs de backup e provider são obrigatórios' 
+        });
+        return;
+      }
+
+      // Buscar backup
+      const backup = await BackupModel.getById(backupId);
+      if (!backup) {
+        res.status(404).json({ 
+          success: false, 
+          error: 'Backup não encontrado' 
+        });
+        return;
+      }
+
+      // Buscar provider
+      const provider = await ProviderModel.getById(providerId);
+      if (!provider || !provider.is_active) {
+        res.status(400).json({ 
+          success: false, 
+          error: 'Provider inválido ou inativo' 
+        });
+        return;
+      }
+
+      // Verificar se o arquivo existe
+      if (!fs.existsSync(backup.caminho)) {
+        res.status(404).json({ 
+          success: false, 
+          error: 'Arquivo de backup não encontrado no sistema' 
+        });
+        return;
+      }
+
+      console.log(`🔄 Iniciando sincronização do backup ${backup.nome_arquivo} para ${provider.name}`);
+      
+      // Atualizar status para "syncing"
+      await BackupModel.updateSyncStatus(backupId, 'syncing', providerId);
+
+      try {
+        let uploadResult;
+        const config = JSON.parse(provider.config);
+
+        // Usar provider específico baseado no tipo
+        if (provider.type === 'dropbox') {
+          const dropboxProvider = new DropboxProvider(config);
+          uploadResult = await dropboxProvider.uploadFile(backup.caminho, backup.nome_arquivo);
+        } else if (provider.type === 'google-drive') {
+          const googleDriveProvider = new GoogleDriveProvider(config);
+          uploadResult = await googleDriveProvider.uploadFile(backup.caminho, backup.nome_arquivo);
+        } else {
+          // Para outros providers (S3, GCS), usar o serviço legado
+          const providerInstance = await providerService.initializeProvider(provider);
+          const file = {
+            path: backup.caminho,
+            originalname: backup.nome_arquivo,
+            size: backup.file_size || 0
+          } as Express.Multer.File;
+          
+          const legacyResult = await providerInstance.uploadFile(file, backup.equipamento_id);
+          uploadResult = {
+            success: true,
+            remotePath: legacyResult.provider_path,
+            size: legacyResult.file_size
+          };
+        }
+
+        if (uploadResult.success) {
+          // Determinar caminho remoto baseado no tipo de provider
+          const remotePath = 'remotePath' in uploadResult ? uploadResult.remotePath : 
+                           'fileId' in uploadResult ? `gd://${uploadResult.fileId}` : 
+                           'unknown';
+
+          // Atualizar status para "synced"
+          await BackupModel.updateSyncStatus(
+            backupId, 
+            'synced', 
+            providerId, 
+            remotePath,
+            null // limpar erro
+          );
+
+          console.log(`✅ Backup sincronizado com sucesso: ${remotePath}`);
+          
+          res.json({
+            success: true,
+            message: 'Backup sincronizado com sucesso',
+            sync_path: remotePath,
+            sync_date: new Date().toISOString()
+          });
+        } else {
+          throw new Error(uploadResult.error || 'Falha no upload');
+        }
+      } catch (syncError: any) {
+        console.error(`❌ Erro na sincronização:`, syncError);
+        
+        // Atualizar status para "failed"
+        await BackupModel.updateSyncStatus(
+          backupId, 
+          'failed', 
+          providerId, 
+          null, 
+          syncError.message
+        );
+
+        res.status(500).json({
+          success: false,
+          error: syncError.message || 'Erro na sincronização'
+        });
+      }
+    } catch (error: any) {
+      console.error('Erro crítico na sincronização:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erro interno do servidor'
+      });
     }
   }
 }

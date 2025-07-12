@@ -4,6 +4,7 @@ import { authAPI } from '../services/api';
 interface User {
   id: number;
   username: string;
+  role: string;
   created_at: string;
 }
 

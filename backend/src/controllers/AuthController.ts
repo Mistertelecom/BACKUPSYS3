@@ -39,6 +39,7 @@ export class AuthController {
         user: {
           id: user.id,
           username: user.username,
+          role: user.role,
           created_at: user.created_at
         }
       });
@@ -56,6 +57,7 @@ export class AuthController {
         user: {
           id: user.id,
           username: user.username,
+          role: user.role,
           created_at: user.created_at
         }
       });

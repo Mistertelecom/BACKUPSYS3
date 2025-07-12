@@ -225,6 +225,113 @@ export const ProviderForm: React.FC<ProviderFormProps> = ({
           </div>
         );
 
+      case 'dropbox':
+        return (
+          <div className="space-y-4">
+            <InputField
+              label="Access Token"
+              type="password"
+              value={formData.config.accessToken || ''}
+              onChange={(e) => updateConfig('accessToken', e.target.value)}
+              placeholder="sl.xxxxxxxxxxxxxxxxxxxxx"
+              error={errors.accessToken}
+              required
+              helperText="Token de acesso do Dropbox App"
+            />
+            <InputField
+              label="Refresh Token (opcional)"
+              type="password"
+              value={formData.config.refreshToken || ''}
+              onChange={(e) => updateConfig('refreshToken', e.target.value)}
+              placeholder="xxxxxxxxxxxxxxxxxxxxxx"
+              helperText="Para renovação automática do token"
+            />
+            <div className="grid grid-cols-2 gap-4">
+              <InputField
+                label="App Key (opcional)"
+                value={formData.config.appKey || ''}
+                onChange={(e) => updateConfig('appKey', e.target.value)}
+                placeholder="xxxxxxxxxxxxxxx"
+                helperText="Chave da aplicação Dropbox"
+              />
+              <InputField
+                label="App Secret (opcional)"
+                type="password"
+                value={formData.config.appSecret || ''}
+                onChange={(e) => updateConfig('appSecret', e.target.value)}
+                placeholder="xxxxxxxxxxxxxxx"
+                helperText="Segredo da aplicação Dropbox"
+              />
+            </div>
+            <InputField
+              label="Pasta no Dropbox"
+              value={formData.config.folderPath || ''}
+              onChange={(e) => updateConfig('folderPath', e.target.value)}
+              placeholder="/backups"
+              helperText="Pasta onde os backups serão armazenados"
+            />
+          </div>
+        );
+
+      case 'google-drive':
+        return (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <InputField
+                label="Client ID"
+                value={formData.config.clientId || ''}
+                onChange={(e) => updateConfig('clientId', e.target.value)}
+                placeholder="xxxxxxxxxxxxx.apps.googleusercontent.com"
+                error={errors.clientId}
+                required
+              />
+              <InputField
+                label="Client Secret"
+                type="password"
+                value={formData.config.clientSecret || ''}
+                onChange={(e) => updateConfig('clientSecret', e.target.value)}
+                placeholder="GOCSPX-xxxxxxxxxxxxxxxxxx"
+                error={errors.clientSecret}
+                required
+              />
+            </div>
+            <InputField
+              label="Refresh Token"
+              type="password"
+              value={formData.config.refreshToken || ''}
+              onChange={(e) => updateConfig('refreshToken', e.target.value)}
+              placeholder="1//xxxxxxxxxxxxxxxxxxxxxxxxxx"
+              error={errors.refreshToken}
+              required
+              helperText="Token para renovação automática"
+            />
+            <InputField
+              label="Access Token (opcional)"
+              type="password"
+              value={formData.config.accessToken || ''}
+              onChange={(e) => updateConfig('accessToken', e.target.value)}
+              placeholder="ya29.xxxxxxxxxxxxxxxxxx"
+              helperText="Preenchido automaticamente"
+            />
+            <div className="grid grid-cols-2 gap-4">
+              <InputField
+                label="ID da Pasta"
+                value={formData.config.folderId || ''}
+                onChange={(e) => updateConfig('folderId', e.target.value)}
+                placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms"
+                helperText="ID da pasta do Google Drive"
+              />
+              <InputField
+                label="Nome da Pasta"
+                value={formData.config.folderName || ''}
+                onChange={(e) => updateConfig('folderName', e.target.value)}
+                placeholder="Backups Y BACK"
+                helperText="Nome para identificação"
+              />
+            </div>
+          </div>
+        );
+
       default:
         return null;
     }

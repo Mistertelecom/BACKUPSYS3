@@ -2,6 +2,8 @@ import { Provider } from '../models/Provider';
 import { LocalProvider } from './providers/LocalProvider';
 import { S3Provider } from './providers/S3Provider';
 import { GCSProvider } from './providers/GCSProvider';
+import { DropboxProvider } from './providers/DropboxProvider';
+import { GoogleDriveProvider } from './providers/GoogleDriveProvider';
 
 export interface IProviderService {
   uploadFile(file: Express.Multer.File, equipamentoId: number): Promise<{
@@ -50,13 +52,46 @@ export class ProviderService {
     return providerService;
   }
 
-  async testProviderConnection(provider: Provider): Promise<boolean> {
+  async testProviderConnection(provider: Provider): Promise<{ success: boolean; error?: string; details?: any }> {
     try {
+      console.log(`🔧 Inicializando teste para provider tipo: ${provider.type}`);
+      const config = JSON.parse(provider.config);
+      
+      // Para Dropbox e Google Drive, usar os novos providers diretamente
+      if (provider.type === 'dropbox') {
+        const dropboxProvider = new DropboxProvider(config);
+        const result = await dropboxProvider.testConnection();
+        return {
+          success: result.success,
+          error: result.error,
+          details: result.accountInfo
+        };
+      }
+      
+      if (provider.type === 'google-drive') {
+        const googleDriveProvider = new GoogleDriveProvider(config);
+        const result = await googleDriveProvider.testConnection();
+        return {
+          success: result.success,
+          error: result.error,
+          details: result.userInfo
+        };
+      }
+      
+      // Para providers legados (local, aws-s3, gcs)
       const providerService = await this.initializeProvider(provider);
-      return await providerService.testConnection();
+      const isConnected = await providerService.testConnection();
+      return {
+        success: isConnected,
+        error: isConnected ? undefined : 'Falha na conexão'
+      };
     } catch (error) {
-      console.error('Provider connection test failed:', error);
-      return false;
+      console.error('❌ Provider connection test failed:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Erro desconhecido',
+        details: error
+      };
     }
   }
 }

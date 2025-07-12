@@ -24,6 +24,19 @@ export class Database {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE NOT NULL,
         password TEXT NOT NULL,
+        role TEXT DEFAULT 'readonly',
+        is_active BOOLEAN DEFAULT 1,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME
+      )
+    `;
+
+    const createRolesTable = `
+      CREATE TABLE IF NOT EXISTS roles (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT UNIQUE NOT NULL,
+        description TEXT,
+        permissions TEXT NOT NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `;
@@ -104,6 +117,7 @@ export class Database {
 
     this.db.serialize(() => {
       this.db.run(createUsersTable);
+      this.db.run(createRolesTable);
       this.db.run(createEquipamentosTable);
       this.db.run(createProvidersTable);
       this.db.run(createBackupsTable);
@@ -111,12 +125,28 @@ export class Database {
       this.db.run(createBackupHistoryTable);
       
       this.runMigrations();
+      this.createDefaultRoles();
       this.createDefaultUser();
       this.createDefaultProviders();
     });
   }
 
   private runMigrations() {
+    // Adicionar colunas de role e status ao users se não existirem
+    const userColumns = [
+      'ALTER TABLE users ADD COLUMN role TEXT DEFAULT "readonly"',
+      'ALTER TABLE users ADD COLUMN is_active BOOLEAN DEFAULT 1',
+      'ALTER TABLE users ADD COLUMN updated_at DATETIME'
+    ];
+
+    userColumns.forEach(sql => {
+      this.db.run(sql, (err) => {
+        if (err && !err.message.includes('duplicate column name')) {
+          console.error('Erro ao adicionar coluna user:', err);
+        }
+      });
+    });
+
     // Adicionar coluna metadata à tabela backups se não existir
     this.db.run(`ALTER TABLE backups ADD COLUMN metadata TEXT`, (err) => {
       if (err && !err.message.includes('duplicate column name')) {
@@ -160,6 +190,79 @@ export class Database {
         }
       });
     });
+
+    // Adicionar colunas de sincronização à tabela backups
+    const syncColumns = [
+      'ALTER TABLE backups ADD COLUMN sync_status TEXT DEFAULT "not_synced"',
+      'ALTER TABLE backups ADD COLUMN last_sync_date DATETIME',
+      'ALTER TABLE backups ADD COLUMN sync_provider_id INTEGER',
+      'ALTER TABLE backups ADD COLUMN sync_provider_path TEXT',
+      'ALTER TABLE backups ADD COLUMN sync_error TEXT'
+    ];
+
+    syncColumns.forEach(sql => {
+      this.db.run(sql, (err) => {
+        if (err && !err.message.includes('duplicate column name')) {
+          console.error('Erro ao adicionar coluna de sincronização:', err);
+        }
+      });
+    });
+  }
+
+  private createDefaultRoles() {
+    const checkRoles = `SELECT COUNT(*) as count FROM roles`;
+    
+    this.db.get(checkRoles, [], (err, row: any) => {
+      if (err) {
+        console.error('Erro ao verificar roles:', err);
+        return;
+      }
+      
+      if (row.count === 0) {
+        const defaultRoles = [
+          {
+            name: 'admin',
+            description: 'Administrador com acesso total ao sistema',
+            permissions: JSON.stringify([
+              'users.create', 'users.read', 'users.update', 'users.delete',
+              'equipamentos.create', 'equipamentos.read', 'equipamentos.update', 'equipamentos.delete',
+              'backups.create', 'backups.read', 'backups.update', 'backups.delete', 'backups.download',
+              'providers.create', 'providers.read', 'providers.update', 'providers.delete',
+              'system.admin'
+            ])
+          },
+          {
+            name: 'readonly',
+            description: 'Usuário com permissões somente de leitura',
+            permissions: JSON.stringify([
+              'equipamentos.read',
+              'backups.read'
+            ])
+          },
+          {
+            name: 'download',
+            description: 'Usuário com permissões de leitura e download',
+            permissions: JSON.stringify([
+              'equipamentos.read',
+              'backups.read',
+              'backups.download'
+            ])
+          }
+        ];
+
+        const insertRole = `INSERT INTO roles (name, description, permissions) VALUES (?, ?, ?)`;
+        
+        defaultRoles.forEach(role => {
+          this.db.run(insertRole, [role.name, role.description, role.permissions], (err) => {
+            if (err) {
+              console.error('Erro ao criar role padrão:', err);
+            } else {
+              console.log(`Role ${role.name} criada`);
+            }
+          });
+        });
+      }
+    });
   }
 
   private createDefaultUser() {
@@ -173,13 +276,21 @@ export class Database {
       
       if (row.count === 0) {
         const hashedPassword = bcrypt.hashSync('admin123', 10);
-        const insertUser = `INSERT INTO users (username, password) VALUES (?, ?)`;
+        const insertUser = `INSERT INTO users (username, password, role, is_active) VALUES (?, ?, ?, ?)`;
         
-        this.db.run(insertUser, ['admin', hashedPassword], (err) => {
+        this.db.run(insertUser, ['admin', hashedPassword, 'admin', 1], (err) => {
           if (err) {
             console.error('Erro ao criar usuário padrão:', err);
           } else {
-            console.log('Usuário padrão criado: admin / admin123');
+            console.log('Usuário padrão criado: admin / admin123 (role: admin)');
+          }
+        });
+      } else {
+        // Atualizar usuário existente para ter role admin se não tiver
+        const updateUser = `UPDATE users SET role = 'admin' WHERE username = 'admin' AND (role IS NULL OR role = '')`;
+        this.db.run(updateUser, [], (err) => {
+          if (err) {
+            console.error('Erro ao atualizar role do usuário admin:', err);
           }
         });
       }
@@ -221,6 +332,29 @@ export class Database {
               bucket: '',
               projectId: '',
               keyFilename: ''
+            })
+          },
+          {
+            name: 'Dropbox',
+            type: 'dropbox',
+            config: JSON.stringify({
+              accessToken: '',
+              refreshToken: '',
+              appKey: '',
+              appSecret: '',
+              folderPath: '/backups'
+            })
+          },
+          {
+            name: 'Google Drive',
+            type: 'google-drive',
+            config: JSON.stringify({
+              clientId: '',
+              clientSecret: '',
+              refreshToken: '',
+              accessToken: '',
+              folderId: '',
+              folderName: 'Backups Y BACK'
             })
           }
         ];
