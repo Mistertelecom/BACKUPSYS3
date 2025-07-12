@@ -45,6 +45,8 @@ export class SSHService {
    * Verifica conectividade completa (ping + SSH)
    */
   async checkConnectivity(config: SSHConfig): Promise<ConnectivityResult> {
+    console.log(`🔍 Testando conectividade para ${config.host}:${config.port}`);
+    
     const result: ConnectivityResult = {
       isOnline: false,
       sshConnectable: false,
@@ -53,11 +55,16 @@ export class SSHService {
     };
 
     try {
-      // Teste de ping
+      // Teste de ping (Windows usa -n, Unix usa -c)
+      const isWindows = process.platform === 'win32';
+      console.log(`📡 Executando ping para ${config.host} (Platform: ${process.platform})`);
+      
       const pingResult = await ping.promise.probe(config.host, {
         timeout: 5,
-        extra: ['-c', '3']
+        extra: isWindows ? ['-n', '3'] : ['-c', '3']
       });
+
+      console.log(`📡 Resultado do ping:`, pingResult);
 
       result.ping = {
         success: pingResult.alive,
@@ -69,17 +76,22 @@ export class SSHService {
 
       // Teste de SSH apenas se ping for bem-sucedido
       if (pingResult.alive) {
+        console.log(`🔑 Testando conexão SSH para ${config.host}:${config.port} como ${config.username}`);
         try {
           const sshConnection = await this.connect(config);
           await this.disconnect();
           result.ssh = { success: true };
           result.sshConnectable = true;
+          console.log(`✅ SSH conectado com sucesso!`);
         } catch (sshError) {
+          console.log(`❌ Falha na conexão SSH:`, sshError);
           result.ssh = {
             success: false,
             error: sshError instanceof Error ? sshError.message : 'Erro desconhecido de SSH'
           };
         }
+      } else {
+        console.log(`❌ Pulando teste SSH - ping falhou`);
       }
 
     } catch (error) {

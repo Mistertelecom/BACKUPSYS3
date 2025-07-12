@@ -98,3 +98,12 @@ export const backupJobsAPI = {
   runNow: (id: number) => api.post(`/backup-jobs/${id}/run`),
   validateCron: (pattern: string) => api.post('/backup-jobs/validate-cron', { pattern }),
 };
+
+export const autoBackupAPI = {
+  getConfig: (equipamentoId: number) => api.get(`/auto-backup/config/${equipamentoId}`),
+  updateConfig: (equipamentoId: number, data: any) => api.put(`/auto-backup/config/${equipamentoId}`, data),
+  testConnectivity: (equipamentoId: number) => api.post(`/auto-backup/test-connectivity/${equipamentoId}`),
+  executeBackup: (equipamentoId: number) => api.post(`/auto-backup/execute/${equipamentoId}`),
+  getScripts: () => api.get('/auto-backup/scripts'),
+  getHistory: (equipamentoId: number) => api.get(`/auto-backup/history/${equipamentoId}`),
+};

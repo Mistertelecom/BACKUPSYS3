@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Wifi, WifiOff, Play, Loader2, CheckCircle, AlertCircle, Info, Eye, EyeOff } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { InputField } from '../ui/InputField';
+import { autoBackupAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 
 interface Equipamento {
@@ -158,21 +159,8 @@ export const AutoBackupConfigModal: React.FC<AutoBackupConfigModalProps> = ({
   const handleSave = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/auto-backup/config/${equipamento.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(formData)
-      });
-
-      if (!response.ok) {
-        throw new Error('Falha ao salvar configuração');
-      }
-
-      const result = await response.json();
-      onSave(result.equipamento);
+      const response = await autoBackupAPI.updateConfig(equipamento.id, formData);
+      onSave(response.data.equipamento);
       toast.success('Configuração salva com sucesso!');
       onClose();
     } catch (error: any) {
@@ -196,24 +184,11 @@ export const AutoBackupConfigModal: React.FC<AutoBackupConfigModalProps> = ({
     setIsTesting(true);
     try {
       // Primeiro salvar a configuração
-      await fetch(`/api/auto-backup/config/${equipamento.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(formData)
-      });
+      await autoBackupAPI.updateConfig(equipamento.id, formData);
 
       // Depois testar conectividade
-      const response = await fetch(`/api/auto-backup/test-connectivity/${equipamento.id}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-
-      const result = await response.json();
+      const response = await autoBackupAPI.testConnectivity(equipamento.id);
+      const result = response.data;
       setConnectivity(result.connectivity);
       setLastTest(new Date());
 
@@ -233,14 +208,8 @@ export const AutoBackupConfigModal: React.FC<AutoBackupConfigModalProps> = ({
   const handleExecuteBackup = async () => {
     setIsExecuting(true);
     try {
-      const response = await fetch(`/api/auto-backup/execute/${equipamento.id}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-
-      const result = await response.json();
+      const response = await autoBackupAPI.executeBackup(equipamento.id);
+      const result = response.data;
 
       if (result.success) {
         toast.success('Backup executado com sucesso!');
