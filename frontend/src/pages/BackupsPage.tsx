@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { Search, Download, Trash2, HardDrive, Filter } from 'lucide-react';
+import { Search, Download, Trash2, HardDrive, Filter, BarChart3 } from 'lucide-react';
 import { backupsAPI } from '../services/api';
 import { Button } from '../components/ui/Button';
+import { BackupStats } from '../components/dashboard/BackupStats';
 
 interface Backup {
   id: number;
@@ -21,6 +22,7 @@ export function BackupsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('');
+  const [showStats, setShowStats] = useState(false);
 
   const fetchBackups = async () => {
     try {
@@ -119,8 +121,18 @@ export function BackupsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Backups</h1>
-        <div className="text-sm text-gray-500">
-          {filteredBackups.length} backup(s) encontrado(s)
+        <div className="flex items-center space-x-4">
+          <Button
+            variant={showStats ? "default" : "outline"}
+            onClick={() => setShowStats(!showStats)}
+            className="flex items-center space-x-2"
+          >
+            <BarChart3 className="h-4 w-4" />
+            <span>{showStats ? 'Ocultar' : 'Mostrar'} Estatísticas</span>
+          </Button>
+          <div className="text-sm text-gray-500">
+            {filteredBackups.length} backup(s) encontrado(s)
+          </div>
         </div>
       </div>
 
@@ -163,6 +175,11 @@ export function BackupsPage() {
           Limpar Filtros
         </Button>
       </div>
+
+      {/* Dashboard de Estatísticas */}
+      {showStats && (
+        <BackupStats backups={backups} />
+      )}
 
       {filteredBackups.length === 0 ? (
         <div className="text-center py-12">
