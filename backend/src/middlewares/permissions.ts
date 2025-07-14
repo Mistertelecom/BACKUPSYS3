@@ -48,7 +48,7 @@ export const checkPermission = (requiredPermission: string) => {
         
         try {
           const permissions = JSON.parse(row.permissions);
-          req.user.permissions = permissions;
+          req.user!.permissions = permissions;
           
           // Verificar se tem a permissão específica ou se é admin
           if (permissions.includes(requiredPermission) || permissions.includes('system.admin')) {

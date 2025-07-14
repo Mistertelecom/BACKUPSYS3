@@ -191,7 +191,7 @@ export class AutoBackupController {
         };
 
         result = await backupService.executeAutoBackup(
-          equipamento.id,
+          equipamento.id!,
           equipamento.nome,
           equipamento.tipo,
           sshConfig,
@@ -209,7 +209,7 @@ export class AutoBackupController {
         };
 
         result = await backupService.executeAutoBackup(
-          equipamento.id,
+          equipamento.id!,
           equipamento.nome,
           equipamento.tipo,
           sshConfig
@@ -228,19 +228,13 @@ export class AutoBackupController {
         try {
           const fileStats = fs.statSync(result.localFilePath);
           const backup = await BackupModel.create({
-            equipamento_id: equipamento.id,
+            equipamento_id: equipamento.id!,
             nome_arquivo: path.basename(result.localFilePath),
             caminho: result.localFilePath,
             provider_type: 'local',
             provider_path: result.localFilePath,
             file_size: fileStats.size,
-            status: 'active',
-            metadata: JSON.stringify({
-              backup_type: 'automated_ssh',
-              equipment_type: equipamento.tipo,
-              ssh_execution: true,
-              logs: result.logs
-            })
+            status: 'active'
           });
 
           res.json({

@@ -73,7 +73,8 @@ export class DashboardController {
           // Only test connection if provider is active
           if (provider.is_active) {
             try {
-              isHealthy = await providerService.testProviderConnection(provider);
+              const testResult = await providerService.testProviderConnection(provider);
+              isHealthy = testResult.success;
             } catch (error) {
               console.warn(`Provider ${provider.name} (${provider.type}) health check failed:`, error);
               isHealthy = false;

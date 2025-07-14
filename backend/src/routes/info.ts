@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { FileTypeDetector } from '../utils/fileTypeDetector';
+import { FileTypeDetector, EQUIPMENT_FILE_TYPES } from '../utils/fileTypeDetector';
 
 const router = Router();
 
@@ -7,7 +7,7 @@ const router = Router();
 router.get('/file-types', (req: Request, res: Response) => {
   try {
     const supportedExtensions = FileTypeDetector.getSupportedExtensions();
-    const equipmentTypes = FileTypeDetector.EQUIPMENT_FILE_TYPES;
+    const equipmentTypes = EQUIPMENT_FILE_TYPES;
     
     res.json({
       supportedExtensions,
@@ -27,7 +27,7 @@ router.get('/file-types/:equipmentType', (req: Request, res: Response) => {
     const normalizedType = equipmentType.toLowerCase();
     
     // Try to find matching equipment type
-    for (const [key, info] of Object.entries(FileTypeDetector.EQUIPMENT_FILE_TYPES)) {
+    for (const [key, info] of Object.entries(EQUIPMENT_FILE_TYPES)) {
       if (key.toLowerCase() === normalizedType || 
           info.equipment.toLowerCase().includes(normalizedType) ||
           normalizedType.includes(key.toLowerCase())) {

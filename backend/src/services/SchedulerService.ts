@@ -112,11 +112,11 @@ export class SchedulerService {
       
       // Upload to provider
       const providerInstance = await providerService.initializeProvider(provider);
-      const uploadResult = await providerInstance.uploadFile(backupFile, equipamento.id);
+      const uploadResult = await providerInstance.uploadFile(backupFile, equipamento.id!);
       
       // Save backup record
       await BackupModel.create({
-        equipamento_id: equipamento.id,
+        equipamento_id: equipamento.id!,
         nome_arquivo: backupFile.originalname,
         caminho: backupFile.path,
         provider_type: provider.type,
@@ -330,30 +330,29 @@ backup-date ${new Date().toISOString()}
     
     try {
       // Create SSH service instance
-      const sshService = new SSHService({
+      const sshConfig = {
         host: equipamento.ip,
         port: equipamento.ssh_port || 22,
-        username: equipamento.ssh_username,
+        username: equipamento.ssh_username || '',
         password: equipamento.ssh_password,
         privateKey: equipamento.ssh_private_key
-      });
+      };
 
       // Execute backup
-      const backupScriptService = new BackupScriptService(sshService);
-      const result = await backupScriptService.executeBackup(equipamento.tipo, equipamento.id);
+      const backupScriptService = new BackupScriptService();
+      const result = await backupScriptService.executeAutoBackup(equipamento.id!, equipamento.nome, equipamento.tipo, sshConfig);
 
       if (result.success) {
         console.log(`✅ Backup automático executado com sucesso para ${equipamento.nome}`);
         
         // Register backup in database with metadata
         const backupRecord = await BackupModel.create({
-          equipamento_id: equipamento.id,
-          nome_arquivo: result.filename || `auto-backup-${equipamento.nome}-${new Date().toISOString()}.tar.gz`,
-          caminho: result.filepath || '',
+          equipamento_id: equipamento.id!,
+          nome_arquivo: result.backupFile || `auto-backup-${equipamento.nome}-${new Date().toISOString()}.tar.gz`,
+          caminho: result.localFilePath || '',
           provider_type: 'local',
-          provider_path: result.filepath,
-          file_size: result.fileSize || 0,
-          checksum: result.checksum || '',
+          provider_path: result.localFilePath,
+          file_size: 0,
           status: 'active'
         });
 

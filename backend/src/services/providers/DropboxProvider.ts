@@ -52,14 +52,15 @@ export class DropboxProvider {
         }
       );
 
-      console.log(`✅ Dropbox: Conectado como ${response.data.name?.display_name} (${response.data.email})`);
+      const data = response.data as any;
+      console.log(`✅ Dropbox: Conectado como ${data.name?.display_name} (${data.email})`);
       
       return {
         success: true,
         accountInfo: {
-          name: response.data.name?.display_name,
-          email: response.data.email,
-          accountId: response.data.account_id
+          name: data.name?.display_name,
+          email: data.email,
+          accountId: data.account_id
         }
       };
     } catch (error: any) {
@@ -150,8 +151,8 @@ export class DropboxProvider {
 
         return {
           success: true,
-          remotePath: response.data.path_display,
-          size: response.data.size
+          remotePath: (response.data as any).path_display,
+          size: (response.data as any).size
         };
       } else {
         // Para arquivos grandes, usar sessão de upload
@@ -183,7 +184,7 @@ export class DropboxProvider {
         }
       );
 
-      const sessionId = sessionResponse.data.session_id;
+      const sessionId = (sessionResponse.data as any).session_id;
       let offset = 8 * 1024 * 1024;
 
       // Upload dos chunks restantes
@@ -218,8 +219,8 @@ export class DropboxProvider {
 
           return {
             success: true,
-            remotePath: finishResponse.data.path_display,
-            size: finishResponse.data.size
+            remotePath: (finishResponse.data as any).path_display,
+            size: (finishResponse.data as any).size
           };
         } else {
           // Chunk intermediário
@@ -283,7 +284,7 @@ export class DropboxProvider {
 
       return {
         success: true,
-        accessToken: response.data.access_token
+        accessToken: (response.data as any).access_token
       };
     } catch (error: any) {
       console.error('Erro ao renovar token Dropbox:', error);
@@ -316,7 +317,7 @@ export class DropboxProvider {
 
       return {
         success: true,
-        files: response.data.entries
+        files: (response.data as any).entries
       };
     } catch (error: any) {
       console.error('Erro ao listar arquivos Dropbox:', error);

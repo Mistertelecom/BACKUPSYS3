@@ -174,9 +174,7 @@ export class SSHService {
         throw new Error('Conexão SSH não estabelecida');
       }
 
-      const result = await this.ssh.execCommand(command, {
-        options: { pty: true }
-      });
+      const result = await this.ssh.execCommand(command);
 
       return {
         success: result.code === 0,

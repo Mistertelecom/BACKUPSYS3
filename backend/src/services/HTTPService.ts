@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosResponse } from 'axios';
+import axios from 'axios';
 import ping from 'ping';
 import fs from 'fs';
 import path from 'path';
@@ -37,7 +37,7 @@ export interface ConnectivityResult {
 }
 
 export class HTTPService {
-  private axiosInstance: AxiosInstance | null = null;
+  private axiosInstance: any | null = null;
   private connectionTimeout: number = 15000; // 15 segundos
   private currentConfig: HTTPConfig | null = null;
 
@@ -81,9 +81,11 @@ export class HTTPService {
             baseURL,
             timeout: this.connectionTimeout,
             validateStatus: () => true, // Aceitar qualquer status code
-            httpsAgent: config.ignoreCertificateErrors ? new https.Agent({
-              rejectUnauthorized: false
-            }) : undefined
+            ...(config.ignoreCertificateErrors && {
+              httpsAgent: new https.Agent({
+                rejectUnauthorized: false
+              })
+            })
           });
 
           const response = await testAxios.get('/');
@@ -123,9 +125,11 @@ export class HTTPService {
         baseURL,
         timeout: config.timeout || this.connectionTimeout,
         validateStatus: () => true, // Não lançar erro para status codes específicos
-        httpsAgent: config.ignoreCertificateErrors ? new https.Agent({
-          rejectUnauthorized: false
-        }) : undefined
+        ...(config.ignoreCertificateErrors && {
+          httpsAgent: new https.Agent({
+            rejectUnauthorized: false
+          })
+        })
       });
 
       this.currentConfig = config;
@@ -255,7 +259,7 @@ export class HTTPService {
         `/${fileName}`
       ];
 
-      let response: AxiosResponse<any> | null = null;
+      let response: any | null = null;
       let successRoute = '';
 
       // Tentar diferentes rotas até encontrar uma que funcione

@@ -63,9 +63,9 @@ export class GoogleDriveProvider {
       return {
         success: true,
         userInfo: {
-          name: response.data.user?.displayName,
-          email: response.data.user?.emailAddress,
-          photoLink: response.data.user?.photoLink
+          name: (response.data as any).user?.displayName,
+          email: (response.data as any).user?.emailAddress,
+          photoLink: (response.data as any).user?.photoLink
         }
       };
     } catch (error: any) {
@@ -157,10 +157,10 @@ export class GoogleDriveProvider {
 
       return {
         success: true,
-        fileId: response.data.id,
-        fileName: response.data.name,
-        size: parseInt(response.data.size),
-        webViewLink: response.data.webViewLink
+        fileId: (response.data as any).id,
+        fileName: (response.data as any).name,
+        size: parseInt((response.data as any).size),
+        webViewLink: (response.data as any).webViewLink
       };
     } catch (error: any) {
       console.error('Erro no upload simples:', error);
@@ -210,10 +210,10 @@ export class GoogleDriveProvider {
 
       return {
         success: true,
-        fileId: uploadResponse.data.id,
-        fileName: uploadResponse.data.name,
-        size: parseInt(uploadResponse.data.size),
-        webViewLink: uploadResponse.data.webViewLink
+        fileId: (uploadResponse.data as any).id,
+        fileName: (uploadResponse.data as any).name,
+        size: parseInt((uploadResponse.data as any).size),
+        webViewLink: (uploadResponse.data as any).webViewLink
       };
     } catch (error: any) {
       console.error('Erro no upload resumível:', error);
@@ -257,8 +257,9 @@ export class GoogleDriveProvider {
         }
       );
 
-      if (searchResponse.data.files && searchResponse.data.files.length > 0) {
-        return searchResponse.data.files[0].id;
+      const searchData = searchResponse.data as any;
+      if (searchData.files && searchData.files.length > 0) {
+        return searchData.files[0].id;
       }
 
       // Criar nova pasta
@@ -276,7 +277,7 @@ export class GoogleDriveProvider {
         }
       );
 
-      return createResponse.data.id;
+      return (createResponse.data as any).id;
     } catch (error: any) {
       console.error('Erro ao gerenciar pasta de backup:', error);
       return null;
@@ -329,8 +330,8 @@ export class GoogleDriveProvider {
         }
       );
 
-      this.config.accessToken = response.data.access_token;
-      return response.data.access_token;
+      this.config.accessToken = (response.data as any).access_token;
+      return (response.data as any).access_token;
     } catch (error: any) {
       console.error('Erro ao renovar token Google Drive:', error);
       return null;
@@ -369,7 +370,7 @@ export class GoogleDriveProvider {
 
       return {
         success: true,
-        files: response.data.files
+        files: (response.data as any).files
       };
     } catch (error: any) {
       console.error('Erro ao listar arquivos Google Drive:', error);
