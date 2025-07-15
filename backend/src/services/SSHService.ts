@@ -10,6 +10,7 @@ export interface SSHConfig {
   password?: string;
   privateKey?: string;
   timeout?: number;
+  equipmentType?: string;
 }
 
 export interface SSHResult {
@@ -74,9 +75,19 @@ export class SSHService {
 
       result.isOnline = pingResult.alive;
 
-      // Teste de SSH apenas se ping for bem-sucedido
+      // Teste de SSH - sempre tentar para Huawei (ICMP pode estar desabilitado)
+      const isHuawei = config.equipmentType?.toLowerCase().includes('huawei') || false;
+      
       if (pingResult.alive) {
         console.log(`🔑 Testando conexão SSH para ${config.host}:${config.port} como ${config.username}`);
+      } else if (isHuawei) {
+        console.log(`⚠️  Ping falhou para equipamento Huawei, mas tentando SSH mesmo assim (ICMP pode estar desabilitado)`);
+        console.log(`🔑 Testando conexão SSH para ${config.host}:${config.port} como ${config.username}`);
+      } else {
+        console.log(`❌ Pulando teste SSH - ping falhou para equipamento não-Huawei`);
+      }
+      
+      if (pingResult.alive || isHuawei) {
         try {
           const sshConnection = await this.connect(config);
           await this.disconnect();
@@ -90,8 +101,6 @@ export class SSHService {
             error: sshError instanceof Error ? sshError.message : 'Erro desconhecido de SSH'
           };
         }
-      } else {
-        console.log(`❌ Pulando teste SSH - ping falhou`);
       }
 
     } catch (error) {
@@ -109,11 +118,17 @@ export class SSHService {
    */
   async connect(config: SSHConfig): Promise<NodeSSH> {
     try {
+      // Timeout específico para equipamentos Huawei (mais tolerante)
+      const isHuawei = config.equipmentType?.toLowerCase().includes('huawei') || false;
+      const timeout = isHuawei ? 15000 : (config.timeout || this.connectionTimeout);
+      
+      console.log(`🔧 Configurando SSH - Equipamento: ${config.equipmentType || 'Desconhecido'}, Timeout: ${timeout}ms`);
+      
       const connectionConfig: any = {
         host: config.host,
         port: config.port,
         username: config.username,
-        readyTimeout: config.timeout || this.connectionTimeout,
+        readyTimeout: timeout,
         algorithms: {
           kex: [
             'diffie-hellman-group1-sha1',

@@ -50,7 +50,8 @@ export class AutoBackupController {
           username: equipamento.ssh_username || '',
           password: equipamento.ssh_password || undefined,
           privateKey: equipamento.ssh_private_key || undefined,
-          timeout: 10000
+          timeout: 10000,
+          equipmentType: equipamento.tipo
         };
 
         const sshService = new SSHService();

@@ -394,16 +394,18 @@ export function BackupsPage() {
                       </div>
                       
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center space-x-3 mb-2">
-                          <h3 className="text-lg font-semibold text-gray-900 truncate group-hover:text-gray-800 transition-colors">
-                            {backup.nome_arquivo}
-                          </h3>
-                          {getStatusBadge(backup)}
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center space-x-3 flex-1 min-w-0">
+                            <h3 className="text-lg font-semibold text-gray-900 truncate group-hover:text-gray-800 transition-colors">
+                              {backup.nome_arquivo}
+                            </h3>
+                            {getStatusBadge(backup)}
+                          </div>
                           
                           {!showDetails && (
                             <button
                               onClick={() => toggleCardExpansion(backup.id)}
-                              className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                              className="flex-shrink-0 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors ml-3"
                               title={isExpanded ? 'Ocultar detalhes' : 'Mostrar detalhes'}
                             >
                               {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
