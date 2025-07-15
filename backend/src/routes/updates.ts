@@ -21,8 +21,8 @@ router.get('/', async (req, res) => {
         version: '1.0.0',
         build: new Date().toISOString().split('T')[0].replace(/-/g, '.'),
         releaseDate: new Date().toISOString().split('T')[0],
-        changelog: [],
-        roadmap: [],
+        changelog: [] as any[],
+        roadmap: [] as any[],
         systemInfo: {
           name: 'Y BACK',
           description: 'Sistema de Backup Empresarial',
