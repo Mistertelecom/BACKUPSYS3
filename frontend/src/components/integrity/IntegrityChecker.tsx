@@ -121,7 +121,7 @@ export function IntegrityChecker({ backups }: IntegrityCheckerProps) {
       .map(r => r.backupId);
     
     if (failedIds.length === 0) {
-      toast.info('Nenhum backup com falha para reverificar.');
+      toast('Nenhum backup com falha para reverificar.');
       return;
     }
     

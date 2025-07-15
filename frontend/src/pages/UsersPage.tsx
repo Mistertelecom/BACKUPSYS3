@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Shield, UserCheck, UserX, Eye } from 'lucide-react';
+import { Plus, Edit, Trash2, UserCheck, UserX, Eye } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../store/authStore';
 
@@ -40,7 +40,7 @@ const UsersPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showPermissions, setShowPermissions] = useState<number | null>(null);
 
-  const { token, user: currentUser } = useAuthStore();
+  const { token } = useAuthStore();
 
   useEffect(() => {
     loadUsers();
@@ -228,82 +228,82 @@ const UsersPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className=\"min-h-screen bg-gray-50 flex items-center justify-center\">
-        <div className=\"animate-spin rounded-full h-32 w-32 border-b-2 border-black\"></div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-black"></div>
       </div>
     );
   }
 
   return (
-    <div className=\"min-h-screen bg-gray-50 p-6\">
-      <div className=\"max-w-7xl mx-auto\">
-        <div className=\"bg-white rounded-lg shadow-sm border border-gray-200 p-6\">
-          <div className=\"flex items-center justify-between mb-6\">
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-7xl mx-auto">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className=\"text-2xl font-bold text-gray-900\">Gerenciamento de Usuários</h1>
-              <p className=\"text-gray-600 mt-1\">Administre usuários e suas permissões no sistema</p>
+              <h1 className="text-2xl font-bold text-gray-900">Gerenciamento de Usuários</h1>
+              <p className="text-gray-600 mt-1">Administre usuários e suas permissões no sistema</p>
             </div>
             <button
               onClick={() => setShowModal(true)}
-              className=\"bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors flex items-center gap-2\"
+              className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors flex items-center gap-2"
             >
-              <Plus className=\"w-4 h-4\" />
+              <Plus className="w-4 h-4" />
               Novo Usuário
             </button>
           </div>
 
-          <div className=\"overflow-x-auto\">
-            <table className=\"w-full\">
+          <div className="overflow-x-auto">
+            <table className="w-full">
               <thead>
-                <tr className=\"border-b border-gray-200\">
-                  <th className=\"text-left py-3 px-4 font-medium text-gray-900\">Usuário</th>
-                  <th className=\"text-left py-3 px-4 font-medium text-gray-900\">Role</th>
-                  <th className=\"text-left py-3 px-4 font-medium text-gray-900\">Status</th>
-                  <th className=\"text-left py-3 px-4 font-medium text-gray-900\">Criado em</th>
-                  <th className=\"text-center py-3 px-4 font-medium text-gray-900\">Ações</th>
+                <tr className="border-b border-gray-200">
+                  <th className="text-left py-3 px-4 font-medium text-gray-900">Usuário</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-900">Role</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-900">Status</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-900">Criado em</th>
+                  <th className="text-center py-3 px-4 font-medium text-gray-900">Ações</th>
                 </tr>
               </thead>
               <tbody>
                 {users.map((user) => (
-                  <tr key={user.id} className=\"border-b border-gray-100 hover:bg-gray-50\">
-                    <td className=\"py-3 px-4\">
-                      <div className=\"flex items-center gap-3\">
-                        <div className=\"w-8 h-8 bg-black text-white rounded-full flex items-center justify-center text-sm font-medium\">
+                  <tr key={user.id} className="border-b border-gray-100 hover:bg-gray-50">
+                    <td className="py-3 px-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-black text-white rounded-full flex items-center justify-center text-sm font-medium">
                           {user.username.charAt(0).toUpperCase()}
                         </div>
                         <div>
-                          <div className=\"font-medium text-gray-900\">{user.username}</div>
+                          <div className="font-medium text-gray-900">{user.username}</div>
                           {user.username === 'admin' && (
-                            <div className=\"text-xs text-gray-500\">Administrador Principal</div>
+                            <div className="text-xs text-gray-500">Administrador Principal</div>
                           )}
                         </div>
                       </div>
                     </td>
-                    <td className=\"py-3 px-4\">
-                      <div className=\"flex items-center gap-2\">
+                    <td className="py-3 px-4">
+                      <div className="flex items-center gap-2">
                         <span className={`px-2 py-1 text-xs font-medium rounded-full border ${getRoleBadgeColor(user.role)}`}>
                           {user.role}
                         </span>
                         <button
                           onClick={() => setShowPermissions(showPermissions === user.id ? null : user.id)}
-                          className=\"text-gray-400 hover:text-gray-600\"
-                          title=\"Ver permissões\"
+                          className="text-gray-400 hover:text-gray-600"
+                          title="Ver permissões"
                         >
-                          <Eye className=\"w-4 h-4\" />
+                          <Eye className="w-4 h-4" />
                         </button>
                       </div>
                       {showPermissions === user.id && (
-                        <div className=\"mt-2 p-2 bg-gray-50 rounded text-xs\">
-                          <div className=\"font-medium text-gray-700 mb-1\">{user.role_description}</div>
+                        <div className="mt-2 p-2 bg-gray-50 rounded text-xs">
+                          <div className="font-medium text-gray-700 mb-1">{user.role_description}</div>
                           {roles.find(r => r.name === user.role)?.permissions.map((perm, idx) => (
-                            <span key={idx} className=\"inline-block bg-white px-1 py-0.5 rounded text-xs text-gray-600 mr-1 mb-1\">
+                            <span key={idx} className="inline-block bg-white px-1 py-0.5 rounded text-xs text-gray-600 mr-1 mb-1">
                               {perm}
                             </span>
                           ))}
                         </div>
                       )}
                     </td>
-                    <td className=\"py-3 px-4\">
+                    <td className="py-3 px-4">
                       <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                         user.is_active 
                           ? 'bg-green-100 text-green-800' 
@@ -312,17 +312,17 @@ const UsersPage: React.FC = () => {
                         {user.is_active ? 'Ativo' : 'Inativo'}
                       </span>
                     </td>
-                    <td className=\"py-3 px-4 text-gray-600\">
+                    <td className="py-3 px-4 text-gray-600">
                       {new Date(user.created_at).toLocaleDateString('pt-BR')}
                     </td>
-                    <td className=\"py-3 px-4\">
-                      <div className=\"flex items-center justify-center gap-2\">
+                    <td className="py-3 px-4">
+                      <div className="flex items-center justify-center gap-2">
                         <button
                           onClick={() => handleEdit(user)}
-                          className=\"text-blue-600 hover:text-blue-800 p-1\"
-                          title=\"Editar\"
+                          className="text-blue-600 hover:text-blue-800 p-1"
+                          title="Editar"
                         >
-                          <Edit className=\"w-4 h-4\" />
+                          <Edit className="w-4 h-4" />
                         </button>
                         
                         {user.username !== 'admin' && (
@@ -332,15 +332,15 @@ const UsersPage: React.FC = () => {
                               className={`p-1 ${user.is_active ? 'text-red-600 hover:text-red-800' : 'text-green-600 hover:text-green-800'}`}
                               title={user.is_active ? 'Desativar' : 'Ativar'}
                             >
-                              {user.is_active ? <UserX className=\"w-4 h-4\" /> : <UserCheck className=\"w-4 h-4\" />}
+                              {user.is_active ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
                             </button>
                             
                             <button
                               onClick={() => handleDelete(user)}
-                              className=\"text-red-600 hover:text-red-800 p-1\"
-                              title=\"Deletar\"
+                              className="text-red-600 hover:text-red-800 p-1"
+                              title="Deletar"
                             >
-                              <Trash2 className=\"w-4 h-4\" />
+                              <Trash2 className="w-4 h-4" />
                             </button>
                           </>
                         )}
@@ -353,7 +353,7 @@ const UsersPage: React.FC = () => {
           </div>
 
           {users.length === 0 && (
-            <div className=\"text-center py-8 text-gray-500\">
+            <div className="text-center py-8 text-gray-500">
               Nenhum usuário encontrado
             </div>
           )}
@@ -362,57 +362,57 @@ const UsersPage: React.FC = () => {
 
       {/* Modal */}
       {showModal && (
-        <div className=\"fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50\">
-          <div className=\"bg-white rounded-lg p-6 w-full max-w-md\">
-            <h2 className=\"text-xl font-bold text-gray-900 mb-4\">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">
               {editingUser ? 'Editar Usuário' : 'Novo Usuário'}
             </h2>
             
-            <form onSubmit={handleSubmit} className=\"space-y-4\">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className=\"block text-sm font-medium text-gray-700 mb-1\">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Username
                 </label>
                 <input
-                  type=\"text\"
+                  type="text"
                   value={formData.username}
                   onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                  className=\"w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black\"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
                   required
                 />
               </div>
 
               <div>
-                <label className=\"block text-sm font-medium text-gray-700 mb-1\">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Password {editingUser && '(deixe em branco para manter)'}
                 </label>
-                <div className=\"relative\">
+                <div className="relative">
                   <input
                     type={showPassword ? 'text' : 'password'}
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    className=\"w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black pr-10\"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black pr-10"
                     required={!editingUser}
                     minLength={6}
                   />
                   <button
-                    type=\"button\"
+                    type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className=\"absolute right-3 top-2.5 text-gray-400 hover:text-gray-600\"
+                    className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
                   >
-                    <Eye className=\"w-4 h-4\" />
+                    <Eye className="w-4 h-4" />
                   </button>
                 </div>
               </div>
 
               <div>
-                <label className=\"block text-sm font-medium text-gray-700 mb-1\">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Role
                 </label>
                 <select
                   value={formData.role}
                   onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                  className=\"w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black\"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
                 >
                   {roles.map((role) => (
                     <option key={role.name} value={role.name}>
@@ -422,17 +422,17 @@ const UsersPage: React.FC = () => {
                 </select>
               </div>
 
-              <div className=\"flex justify-end gap-3 pt-4\">
+              <div className="flex justify-end gap-3 pt-4">
                 <button
-                  type=\"button\"
+                  type="button"
                   onClick={closeModal}
-                  className=\"px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50\"
+                  className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
                 >
                   Cancelar
                 </button>
                 <button
-                  type=\"submit\"
-                  className=\"px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800\"
+                  type="submit"
+                  className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800"
                 >
                   {editingUser ? 'Atualizar' : 'Criar'}
                 </button>

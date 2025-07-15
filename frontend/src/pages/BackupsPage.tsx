@@ -205,7 +205,7 @@ export function BackupsPage() {
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center space-x-2">
             <Button
-              variant={showDetails ? "default" : "outline"}
+              variant={showDetails ? "primary" : "outline"}
               size="sm"
               onClick={toggleShowDetails}
               className="flex items-center space-x-2"
@@ -218,7 +218,7 @@ export function BackupsPage() {
             </Button>
           
             <Button
-              variant={showStats ? "default" : "outline"}
+              variant={showStats ? "primary" : "outline"}
               size="sm"
               onClick={() => {
                 setShowStats(!showStats);
@@ -234,7 +234,7 @@ export function BackupsPage() {
             </Button>
             
             <Button
-              variant={showUsageReport ? "default" : "outline"}
+              variant={showUsageReport ? "primary" : "outline"}
               size="sm"
               onClick={() => {
                 setShowUsageReport(!showUsageReport);
@@ -250,7 +250,7 @@ export function BackupsPage() {
             </Button>
 
             <Button
-              variant={showTimeline ? "default" : "outline"}
+              variant={showTimeline ? "primary" : "outline"}
               size="sm"
               onClick={() => {
                 setShowTimeline(!showTimeline);
@@ -266,7 +266,7 @@ export function BackupsPage() {
             </Button>
 
             <Button
-              variant={showIntegrityChecker ? "default" : "outline"}
+              variant={showIntegrityChecker ? "primary" : "outline"}
               size="sm"
               onClick={() => {
                 setShowIntegrityChecker(!showIntegrityChecker);

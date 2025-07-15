@@ -8,14 +8,20 @@ export class Database {
   private db: sqlite3.Database;
 
   constructor() {
-    this.db = new sqlite3.Database(DATABASE_PATH, (err) => {
-      if (err) {
-        console.error('Erro ao conectar com o banco de dados:', err);
-      } else {
-        console.log('Conectado ao banco SQLite');
-        this.initTables();
-      }
-    });
+    try {
+      this.db = new sqlite3.Database(DATABASE_PATH, (err) => {
+        if (err) {
+          console.error('Erro ao conectar com o banco de dados:', err);
+          process.exit(1);
+        } else {
+          console.log('Conectado ao banco SQLite');
+          this.initTables();
+        }
+      });
+    } catch (constructorErr) {
+      console.error('Erro no constructor do banco:', constructorErr);
+      process.exit(1);
+    }
   }
 
   private initTables() {

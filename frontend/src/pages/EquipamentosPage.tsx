@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { Plus, Search, Server, Cloud, Upload, Filter, Grid, List, Wifi, Shield, Router, Database, Activity, Calendar, Users, HardDrive, TrendingUp, AlertCircle, CheckCircle, Clock, Eye, Edit, Trash2, ExternalLink, Cog } from 'lucide-react';
+import { Plus, Search, Server, Cloud, Upload, Filter, Grid, List, Wifi, Shield, Router, Activity, Calendar, Users, HardDrive, AlertCircle, CheckCircle, Clock, Eye, Edit, Trash2, ExternalLink, Cog } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { equipamentosAPI, backupsAPI } from '../services/api';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { EquipamentoForm } from '../components/forms/EquipamentoForm';
-import { EquipamentoCard } from '../components/cards/EquipamentoCard';
+// import { EquipamentoCard } from '../components/cards/EquipamentoCard';
 import { CloudSyncModal } from '../components/modals/CloudSyncModal';
 import { AutoBackupConfigModal } from '../components/modals/AutoBackupConfigModal';
 import { formatFileSize, formatDate, getRelativeTime } from '../utils/cn';
@@ -526,7 +526,7 @@ export function EquipamentosPage() {
                     <div className="flex items-center space-x-2">
                       <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                       <span className="text-xs text-gray-600">Online</span>
-                      <span className={`ml-2 px-2 py-0.5 rounded-full text-xs ${backupStatus.bgColor} ${backupStatus.color}`}>
+                      <span className={`ml-2 px-2 py-0.5 rounded-full text-xs ${backupStatus.badge}`}>
                         {backupStatus.text}
                       </span>
                     </div>
@@ -571,7 +571,7 @@ export function EquipamentosPage() {
                           setSelectedEquipamentoForAutoBackup(equipamento);
                           setShowAutoBackupModal(true);
                         }}
-                        className={`text-xs ${equipamento.auto_backup_enabled ? 'bg-green-50 border-green-300 text-green-700' : ''}`}
+                        className="text-xs"
                         title="Configurar backup automático"
                       >
                         <Cog className="h-3 w-3 mr-1" />

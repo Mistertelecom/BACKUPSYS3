@@ -62,8 +62,6 @@ services:
       - backend
     networks:
       - yback-network
-    profiles:
-      - production
 
 networks:
   yback-network:

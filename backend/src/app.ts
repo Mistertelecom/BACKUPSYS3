@@ -4,16 +4,20 @@ import helmet from 'helmet';
 import dotenv from 'dotenv';
 import path from 'path';
 
+// Test database import - re-enabled with simpler approach
+import { database } from './database/database';
+
+// Ativar rotas principais gradualmente
 import authRoutes from './routes/auth';
+import infoRoutes from './routes/info';
+import userRoutes from './routes/users';
 import equipamentoRoutes from './routes/equipamentos';
 import backupRoutes from './routes/backups';
 import dashboardRoutes from './routes/dashboard';
 import providerRoutes from './routes/providers';
 import backupJobRoutes from './routes/backupJobs';
-import infoRoutes from './routes/info';
 import autoBackupRoutes from './routes/autoBackup';
 import integrationRoutes from './routes/integration';
-import userRoutes from './routes/users';
 import { schedulerService } from './services/SchedulerService';
 
 dotenv.config();
@@ -27,7 +31,7 @@ app.use(helmet({
 
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://yourdomain.com'] 
+    ? ['https://backup.facilnettelecom.com.br', 'http://backup.facilnettelecom.com.br'] 
     : ['http://localhost:3000', 'http://localhost:5173'],
   credentials: true
 }));
@@ -40,16 +44,17 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 // Serve frontend static files
 app.use(express.static(path.join(__dirname, '../../frontend/dist')));
 
+// Ativar rotas principais gradualmente
 app.use('/api/auth', authRoutes);
+app.use('/api/info', infoRoutes);
+app.use('/api/users', userRoutes);
 app.use('/api/equipamentos', equipamentoRoutes);
 app.use('/api/backups', backupRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/providers', providerRoutes);
 app.use('/api/backup-jobs', backupJobRoutes);
-app.use('/api/info', infoRoutes);
 app.use('/api/auto-backup', autoBackupRoutes);
 app.use('/api/integration', integrationRoutes);
-app.use('/api/users', userRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ 
@@ -76,6 +81,10 @@ app.use((err: any, req: any, res: any, next: any) => {
 app.listen(PORT, async () => {
   console.log(`🚀 Servidor Y BACK rodando na porta ${PORT}`);
   console.log(`🌐 API disponível em: http://localhost:${PORT}/api`);
+  
+  // Force database initialization - re-enabled
+  console.log('Testando database...');
+  console.log('Database instance:', database ? 'OK' : 'FAIL');
   
   // Initialize scheduler service
   try {
