@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Server, HardDrive, LogOut, Settings, Shield, Users } from 'lucide-react';
+import { Home, Server, HardDrive, LogOut, Settings, Shield, Users, RefreshCw } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { cn } from '../../utils/cn';
 
@@ -9,6 +9,7 @@ const navigation = [
   { name: 'Backups', href: '/backups', icon: HardDrive },
   { name: 'Providers', href: '/providers', icon: Settings },
   { name: 'Integração', href: '/integration', icon: Shield },
+  { name: 'Atualizações', href: '/updates', icon: RefreshCw },
 ];
 
 const adminNavigation = [

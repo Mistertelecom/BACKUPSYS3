@@ -1,0 +1,58 @@
+{
+  "version": "1.0.0",
+  "build": "2025.01.15",
+  "releaseDate": "2025-01-15",
+  "changelog": [
+    {
+      "version": "1.0.0",
+      "date": "2025-01-15",
+      "type": "release",
+      "title": "Lançamento Inicial",
+      "description": "Primeira versão do Y BACK - Sistema de Backup Empresarial",
+      "features": [
+        "Sistema completo de backup para equipamentos de rede",
+        "Suporte a múltiplos protocolos (SSH, SFTP, SCP)",
+        "Dashboard com métricas em tempo real",
+        "Gestão de usuários e permissões",
+        "Integração com provedores de armazenamento",
+        "Agendamento automático de backups",
+        "Verificação de integridade dos arquivos",
+        "Timeline de backups por equipamento"
+      ],
+      "improvements": [],
+      "fixes": []
+    }
+  ],
+  "roadmap": [
+    {
+      "version": "1.1.0",
+      "estimatedDate": "2025-02-15",
+      "title": "Melhorias de Performance",
+      "features": [
+        "Backup incremental",
+        "Compressão avançada de arquivos",
+        "Notificações por email/webhook",
+        "API REST completa"
+      ]
+    },
+    {
+      "version": "1.2.0", 
+      "estimatedDate": "2025-03-15",
+      "title": "Recursos Avançados",
+      "features": [
+        "Backup de configurações em lote",
+        "Relatórios personalizados",
+        "Integração com sistemas de monitoramento",
+        "Multi-tenancy"
+      ]
+    }
+  ],
+  "systemInfo": {
+    "name": "Y BACK",
+    "description": "Sistema de Backup Empresarial",
+    "author": "Sua Empresa",
+    "license": "Proprietário",
+    "website": "https://exemplo.com",
+    "support": "suporte@exemplo.com"
+  }
+}
