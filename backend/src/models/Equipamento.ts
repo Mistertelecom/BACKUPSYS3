@@ -202,7 +202,7 @@ export class EquipamentoModel {
     return new Promise((resolve, reject) => {
       const sql = `
         SELECT * FROM equipamentos 
-        WHERE auto_backup_enabled = 1 AND ssh_enabled = 1
+        WHERE auto_backup_enabled = 1 AND (ssh_enabled = 1 OR http_enabled = 1)
         ORDER BY nome
       `;
       
@@ -238,7 +238,7 @@ export class EquipamentoModel {
     return new Promise((resolve, reject) => {
       const sql = `
         SELECT * FROM equipamentos 
-        WHERE ssh_enabled = 1 
+        WHERE (ssh_enabled = 1 OR http_enabled = 1)
         AND auto_backup_enabled = 1
         AND auto_backup_schedule IS NOT NULL
         ORDER BY nome

@@ -329,18 +329,62 @@ backup-date ${new Date().toISOString()}
     console.log(`🚀 Executando backup automático para ${equipamento.nome} (${equipamento.ip})`);
     
     try {
-      // Create SSH service instance
-      const sshConfig = {
-        host: equipamento.ip,
-        port: equipamento.ssh_port || 22,
-        username: equipamento.ssh_username || '',
-        password: equipamento.ssh_password,
-        privateKey: equipamento.ssh_private_key
-      };
+      // Determinar tipo de conexão baseado no tipo de equipamento
+      const equipmentType = equipamento.tipo.toLowerCase();
+      const isMimosa = equipmentType.includes('mimosa');
 
-      // Execute backup
       const backupScriptService = new BackupScriptService();
-      const result = await backupScriptService.executeAutoBackup(equipamento.id!, equipamento.nome, equipamento.tipo, sshConfig);
+      let result;
+
+      if (isMimosa && equipamento.http_enabled) {
+        // Backup HTTP para Mimosa
+        const httpConfig = {
+          host: equipamento.ip,
+          port: equipamento.http_port || 80,
+          protocol: equipamento.http_protocol || 'http',
+          username: equipamento.http_username || '',
+          password: equipamento.http_password || '',
+          timeout: 30000,
+          ignoreCertificateErrors: equipamento.http_ignore_ssl || false
+        };
+
+        const sshConfig = {
+          host: equipamento.ip,
+          port: 22,
+          username: '',
+          password: '',
+          timeout: 30000
+        };
+
+        result = await backupScriptService.executeAutoBackup(
+          equipamento.id!,
+          equipamento.nome,
+          equipamento.tipo,
+          sshConfig,
+          httpConfig
+        );
+      } else if (equipamento.ssh_enabled) {
+        // Backup SSH para outros equipamentos
+        const sshConfig = {
+          host: equipamento.ip,
+          port: equipamento.ssh_port || 22,
+          username: equipamento.ssh_username || '',
+          password: equipamento.ssh_password || undefined,
+          privateKey: equipamento.ssh_private_key || undefined,
+          timeout: 30000
+        };
+
+        result = await backupScriptService.executeAutoBackup(
+          equipamento.id!,
+          equipamento.nome,
+          equipamento.tipo,
+          sshConfig
+        );
+      } else {
+        throw new Error(isMimosa 
+          ? 'HTTP não está habilitado para este equipamento Mimosa' 
+          : 'SSH não está habilitado para este equipamento');
+      }
 
       if (result.success) {
         console.log(`✅ Backup automático executado com sucesso para ${equipamento.nome}`);
@@ -367,7 +411,7 @@ backup-date ${new Date().toISOString()}
   }
 
   async addAutoBackupJob(equipamento: any) {
-    if (equipamento.auto_backup_enabled && equipamento.auto_backup_schedule) {
+    if (equipamento.auto_backup_enabled && equipamento.auto_backup_schedule && (equipamento.ssh_enabled || equipamento.http_enabled)) {
       this.scheduleAutoBackupJob(equipamento);
     }
   }
@@ -381,7 +425,7 @@ backup-date ${new Date().toISOString()}
     }
 
     // Add new job if enabled
-    if (equipamento.auto_backup_enabled && equipamento.auto_backup_schedule) {
+    if (equipamento.auto_backup_enabled && equipamento.auto_backup_schedule && (equipamento.ssh_enabled || equipamento.http_enabled)) {
       this.scheduleAutoBackupJob(equipamento);
     }
   }
