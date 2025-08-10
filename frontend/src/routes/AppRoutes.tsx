@@ -6,7 +6,7 @@ import { BackupsPage } from '../pages/BackupsPage';
 import { ProvidersPage } from '../pages/ProvidersPage';
 import { UploadBackupPage } from '../pages/UploadBackupPage';
 import { IntegrationPage } from '../pages/IntegrationPage';
-import { UpdatesPage } from '../pages/UpdatesPage';
+import UpdatesPage from '../pages/UpdatesPage';
 import UsersPage from '../pages/UsersPage';
 import { Layout } from '../components/layout/Layout';
 import { ProtectedRoute } from '../components/ProtectedRoute';
