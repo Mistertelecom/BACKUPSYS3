@@ -9,6 +9,10 @@ router.get('/', UpdateController.getUpdatesInfo);
 // Verificar atualizações disponíveis
 router.get('/check', UpdateController.checkUpdates);
 
+// Rotas específicas do GitHub
+router.get('/github/check', UpdateController.checkUpdates);
+router.get('/github/system-info', UpdateController.getSystemStatus);
+
 // Obter status do sistema
 router.get('/system/status', UpdateController.getSystemStatus);
 
