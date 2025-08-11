@@ -74,7 +74,45 @@ check_dependencies() {
         exit 1
     fi
     
+    # Verificar Node.js e npm se necessário
+    if [ -f "package.json" ]; then
+        if ! command -v node &> /dev/null; then
+            warning "Node.js não está instalado (necessário apenas para dependências do projeto)"
+        fi
+        if ! command -v npm &> /dev/null; then
+            warning "npm não está instalado (necessário apenas para dependências do projeto)"
+        fi
+    fi
+    
+    # Verificar espaço em disco (mínimo 1GB)
+    local available_space=$(df . | awk 'NR==2 {print $4}')
+    local min_space=1048576  # 1GB em KB
+    if [ "$available_space" -lt "$min_space" ]; then
+        warning "Pouco espaço em disco disponível: $(($available_space/1024/1024))GB"
+        warning "Recomendado: pelo menos 1GB livre"
+    fi
+    
     success "Todas as dependências estão instaladas"
+}
+
+# Função para verificar configuração GitHub
+check_github_config() {
+    log "Verificando configuração GitHub..."
+    
+    # Verificar se há token configurado
+    if [ -n "$GITHUB_TOKEN" ]; then
+        success "Token GitHub está configurado via variável de ambiente"
+    elif [ -f "config/secure-config.json" ]; then
+        success "Token GitHub pode estar configurado via interface"
+    else
+        warning "Token GitHub não está configurado"
+        warning "Configure o token via interface em: Configurações > Integração GitHub"
+        warning "Ou defina a variável GITHUB_TOKEN no docker-compose.yml"
+    fi
+    
+    # Verificar configuração do repositório
+    local current_repo=$(git config --get remote.origin.url 2>/dev/null || echo "não configurado")
+    log "Repositório atual: $current_repo"
 }
 
 # Função para criar backup
@@ -185,10 +223,60 @@ rebuild_containers() {
 update_system() {
     log "Atualizando sistema..."
     
-    # Update com zero downtime
-    docker-compose up -d --force-recreate
+    # Parar containers antigos graciosamente
+    log "Parando containers antigos..."
+    docker-compose down --timeout 30 || {
+        warning "Falha ao parar containers graciosamente, forçando parada..."
+        docker-compose kill
+        docker-compose rm -f
+    }
+    
+    # Instalar dependências se necessário
+    log "Verificando dependências do projeto..."
+    if [ -f "package.json" ]; then
+        npm install --production
+    fi
+    
+    # Update com containers novos
+    log "Iniciando containers atualizados..."
+    docker-compose up -d --force-recreate --remove-orphans
     
     success "Sistema atualizado"
+}
+
+# Função para instalar wget nos containers se necessário
+install_wget() {
+    log "Verificando e instalando wget nos containers..."
+    
+    # Instalar wget no backend se necessário
+    if docker-compose ps | grep -q "yback-backend.*Up"; then
+        log "Verificando wget no container backend..."
+        if ! docker-compose exec -T backend which wget >/dev/null 2>&1; then
+            log "Instalando wget no backend..."
+            docker-compose exec -T backend sh -c 'apt-get update && apt-get install -y wget curl' || {
+                warning "Falha ao instalar wget via apt-get, tentando apk..."
+                docker-compose exec -T backend sh -c 'apk update && apk add wget curl' || {
+                    warning "Falha ao instalar wget, usando curl como alternativa"
+                }
+            }
+        fi
+    fi
+    
+    # Instalar wget no frontend se necessário
+    if docker-compose ps | grep -q "yback-frontend.*Up"; then
+        log "Verificando wget no container frontend..."
+        if ! docker-compose exec -T frontend which wget >/dev/null 2>&1; then
+            log "Instalando wget no frontend..."
+            docker-compose exec -T frontend sh -c 'apt-get update && apt-get install -y wget curl' || {
+                warning "Falha ao instalar wget via apt-get, tentando apk..."
+                docker-compose exec -T frontend sh -c 'apk update && apk add wget curl' || {
+                    warning "Falha ao instalar wget, usando curl como alternativa"
+                }
+            }
+        fi
+    fi
+    
+    success "Verificação de wget concluída"
 }
 
 # Função para verificar saúde do sistema
@@ -209,31 +297,64 @@ health_check() {
         return 1
     fi
     
-    # Verificar health checks
+    # Instalar wget se necessário
+    install_wget
+    
+    # Verificar health checks do backend
     local timeout=$HEALTH_CHECK_TIMEOUT
     local count=0
     
+    log "Testando conectividade do backend..."
     while [ $count -lt $timeout ]; do
+        # Tentar wget primeiro, depois curl como fallback
         if docker-compose exec -T backend wget --quiet --tries=1 --spider http://localhost:3001/api/health 2>/dev/null; then
-            success "Backend está saudável"
+            success "Backend está saudável (wget)"
             break
-        fi
-        
-        if [ $count -eq $((timeout - 1)) ]; then
-            error "Backend não passou no health check"
+        elif docker-compose exec -T backend curl -s -f http://localhost:3001/api/health >/dev/null 2>&1; then
+            success "Backend está saudável (curl)"
+            break
+        elif [ $count -eq $((timeout - 1)) ]; then
+            error "Backend não passou no health check após $timeout segundos"
+            log "Tentando diagnóstico adicional..."
+            docker-compose logs --tail=10 backend
             return 1
         fi
         
         count=$((count + 1))
+        if [ $((count % 10)) -eq 0 ]; then
+            log "Aguardando backend... ($count/$timeout)"
+        fi
         sleep 1
     done
     
     # Verificar frontend
+    log "Testando conectividade do frontend..."
+    local frontend_ok=false
     if docker-compose exec -T frontend wget --quiet --tries=1 --spider http://localhost:80 2>/dev/null; then
-        success "Frontend está saudável"
+        success "Frontend está saudável (wget)"
+        frontend_ok=true
+    elif docker-compose exec -T frontend curl -s -f http://localhost:80 >/dev/null 2>&1; then
+        success "Frontend está saudável (curl)"
+        frontend_ok=true
     else
-        error "Frontend não passou no health check"
-        return 1
+        # Tentar teste externo via host
+        if curl -s -f http://localhost:3000 >/dev/null 2>&1; then
+            success "Frontend está saudável (teste externo)"
+            frontend_ok=true
+        else
+            error "Frontend não passou no health check"
+            log "Tentando diagnóstico adicional..."
+            docker-compose logs --tail=10 frontend
+            return 1
+        fi
+    fi
+    
+    # Verificar conectividade entre containers
+    log "Testando conectividade entre containers..."
+    if docker-compose exec -T frontend sh -c 'wget --quiet --tries=1 --spider http://backend:3001/api/health 2>/dev/null || curl -s -f http://backend:3001/api/health >/dev/null'; then
+        success "Conectividade interna está funcionando"
+    else
+        warning "Conectividade interna pode ter problemas, mas containers estão rodando"
     fi
     
     success "Sistema está saudável"
@@ -317,6 +438,9 @@ main() {
     
     # Verificar dependências
     check_dependencies
+    
+    # Verificar configuração GitHub
+    check_github_config
     
     # Confirmar atualização
     echo ""

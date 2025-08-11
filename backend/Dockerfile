@@ -1,7 +1,7 @@
 # Dockerfile para Backend Node.js
 FROM node:20-bullseye-slim
 
-# Instalar dependências do sistema necessárias para SSH e SQLite
+# Instalar dependências do sistema necessárias para SSH, SQLite e health checks
 RUN apt-get update && apt-get install -y \
     openssh-client \
     iputils-ping \
@@ -11,6 +11,11 @@ RUN apt-get update && apt-get install -y \
     python3 \
     make \
     g++ \
+    wget \
+    curl \
+    git \
+    tar \
+    gzip \
     && rm -rf /var/lib/apt/lists/*
 
 # Criar diretório da aplicação
