@@ -14,11 +14,15 @@ services:
       - ./backend/database:/app/database
       - ./backend/auto_backups:/app/auto_backups
       - ./backend/uploads:/app/uploads
+      - ./system_backups:/app/system_backups
     environment:
       - NODE_ENV=production
       - DATABASE_PATH=/app/database/database.sqlite
       - AUTO_BACKUP_DIR=/app/auto_backups
       - PORT=3001
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+      - GITHUB_OWNER=${GITHUB_OWNER:-Mistertelecom}
+      - GITHUB_REPO=${GITHUB_REPO:-BACKUPSYS3}
     networks:
       - yback-network
     healthcheck:

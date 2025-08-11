@@ -156,7 +156,7 @@ export class UpdateController {
           notes: release.body,
           publishedAt: release.published_at,
           isPrerelease: release.prerelease,
-          assets: release.assets.map(asset => ({
+          assets: release.assets.map((asset: any) => ({
             name: asset.name,
             downloadCount: asset.download_count,
             downloadUrl: asset.browser_download_url
@@ -334,7 +334,7 @@ export class UpdateController {
         isPrerelease: release.prerelease,
         isCurrent: release.tag_name.replace(/^v/, '') === currentVersion,
         hasAssets: release.assets.length > 0,
-        downloadCount: release.assets.reduce((sum, asset) => sum + asset.download_count, 0)
+        downloadCount: release.assets.reduce((sum: number, asset: any) => sum + asset.download_count, 0)
       }));
 
       res.json({
