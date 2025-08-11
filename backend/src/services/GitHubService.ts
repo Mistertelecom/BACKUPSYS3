@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import { configService } from './ConfigService';
 
 const execAsync = promisify(exec);
 
@@ -46,13 +47,24 @@ class GitHubService {
   private repo: string;
 
   constructor() {
+    // Inicializar sem token - será configurado dinamicamente
+    this.updateOctokit();
+  }
+
+  /**
+   * Atualiza configurações do Octokit com token atual
+   */
+  private updateOctokit(): void {
+    const token = configService.getGitHubToken();
+    const { owner, repo } = configService.getGitHubRepo();
+
     this.octokit = new Octokit({
-      auth: process.env.GITHUB_TOKEN,
+      auth: token || undefined,
       userAgent: 'BackupSys3/1.0.0'
     });
 
-    this.owner = process.env.GITHUB_OWNER || 'Mistertelecom';
-    this.repo = process.env.GITHUB_REPO || 'BACKUPSYS3';
+    this.owner = owner;
+    this.repo = repo;
   }
 
   /**
@@ -60,6 +72,12 @@ class GitHubService {
    */
   async checkForUpdates(): Promise<UpdateInfo> {
     try {
+      // Atualizar configurações antes de cada operação
+      this.updateOctokit();
+      
+      if (!configService.hasGitHubToken()) {
+        throw new Error('Token GitHub não configurado. Configure o token nas configurações.');
+      }
       // Obter versão atual
       const currentVersion = await this.getCurrentVersion();
       
@@ -122,6 +140,12 @@ class GitHubService {
    */
   async getAllReleases(limit: number = 10): Promise<any[]> {
     try {
+      // Atualizar configurações antes de cada operação
+      this.updateOctokit();
+      
+      if (!configService.hasGitHubToken()) {
+        throw new Error('Token GitHub não configurado. Configure o token nas configurações.');
+      }
       const { data: releases } = await this.octokit.rest.repos.listReleases({
         owner: this.owner,
         repo: this.repo,

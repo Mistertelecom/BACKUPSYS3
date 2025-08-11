@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Server, HardDrive, LogOut, Settings, Shield, Users, RefreshCw } from 'lucide-react';
+import { Home, Server, HardDrive, LogOut, Settings, Shield, Users, RefreshCw, Cog } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { cn } from '../../utils/cn';
 
@@ -13,6 +13,7 @@ const navigation = [
 ];
 
 const adminNavigation = [
+  { name: 'Configurações', href: '/config', icon: Cog },
   { name: 'Usuários', href: '/users', icon: Users },
 ];
 
