@@ -4,7 +4,16 @@ import { authenticateToken } from '../middlewares/auth';
 
 const router = Router();
 
-// Middleware de autenticação para todas as rotas
+// Rota de teste sem autenticação
+router.get('/test', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Config API está funcionando',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Middleware de autenticação para todas as outras rotas
 router.use(authenticateToken);
 
 // Obter configurações GitHub

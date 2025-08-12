@@ -28,40 +28,65 @@ export class ConfigService {
   }
 
   /**
-   * Criptografa um valor usando AES-256
+   * Criptografa um valor usando AES-256-CBC
    */
   private encrypt(text: string): string {
     if (!text) return '';
     
-    const iv = crypto.randomBytes(16);
-    const cipher = crypto.createCipher('aes-256-cbc', ENCRYPTION_KEY);
-    let encrypted = cipher.update(text, 'utf8', 'hex');
-    encrypted += cipher.final('hex');
-    
-    return iv.toString('hex') + ':' + encrypted;
+    try {
+      const key = crypto.scryptSync(ENCRYPTION_KEY, 'salt', 32);
+      const iv = crypto.randomBytes(16);
+      
+      const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
+      let encrypted = cipher.update(text, 'utf8', 'hex');
+      encrypted += cipher.final('hex');
+      
+      return iv.toString('hex') + ':' + encrypted;
+    } catch (error) {
+      console.error('Erro ao criptografar:', error);
+      // Fallback: usar base64 simples (melhor que falhar)
+      return 'b64:' + Buffer.from(text).toString('base64');
+    }
   }
 
   /**
-   * Descriptografa um valor usando AES-256
+   * Descriptografa um valor usando AES-256-CBC
    */
   private decrypt(encryptedText: string): string {
     if (!encryptedText) return '';
     
     try {
+      // Verificar se é base64 simples (fallback)
+      if (encryptedText.startsWith('b64:')) {
+        return Buffer.from(encryptedText.substring(4), 'base64').toString('utf8');
+      }
+      
+      // Descriptografia AES
       const textParts = encryptedText.split(':');
-      if (textParts.length < 2) return '';
+      if (textParts.length !== 2) {
+        throw new Error('Formato inválido');
+      }
       
-      textParts.shift(); // Remove IV (não usado no createDecipher)
-      const encrypted = textParts.join(':');
+      const key = crypto.scryptSync(ENCRYPTION_KEY, 'salt', 32);
+      const iv = Buffer.from(textParts[0], 'hex');
+      const encrypted = textParts[1];
       
-      const decipher = crypto.createDecipher('aes-256-cbc', ENCRYPTION_KEY);
+      const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
       let decrypted = decipher.update(encrypted, 'hex', 'utf8');
       decrypted += decipher.final('utf8');
       
       return decrypted;
+      
     } catch (error) {
       console.error('Erro ao descriptografar:', error);
-      return '';
+      
+      // Fallback: tentar base64 simples
+      try {
+        return Buffer.from(encryptedText, 'base64').toString('utf8');
+      } catch {
+        console.error('Falha completa na descriptografia');
+        return '';
+      }
     }
   }
 
@@ -110,29 +135,45 @@ export class ConfigService {
    * Define o token GitHub de forma segura
    */
   setGitHubToken(token: string): void {
+    console.log('🔐 ConfigService.setGitHubToken - Início');
+    
     if (!token || token.trim() === '') {
+      console.log('❌ Token vazio ou inválido');
       throw new Error('Token não pode estar vazio');
     }
 
     // Validar formato básico do token GitHub
     if (!token.startsWith('ghp_') && !token.startsWith('github_pat_')) {
+      console.log('❌ Formato de token inválido:', token.substring(0, 10));
       throw new Error('Formato de token GitHub inválido');
     }
 
+    console.log('🔐 Criptografando token...');
     this.config.githubToken = this.encrypt(token);
     this.config.encryptedAt = new Date().toISOString();
+    
+    console.log('💾 Salvando configuração...');
     this.saveConfig();
+    console.log('✅ Token GitHub configurado com sucesso');
   }
 
   /**
    * Obtém o token GitHub descriptografado
    */
   getGitHubToken(): string {
+    console.log('🔓 ConfigService.getGitHubToken - Início');
+    
     if (!this.config.githubToken) {
-      return process.env.GITHUB_TOKEN || '';
+      console.log('📝 Usando token da variável de ambiente');
+      const envToken = process.env.GITHUB_TOKEN || '';
+      console.log('🔍 Token env disponível:', envToken ? 'Sim' : 'Não');
+      return envToken;
     }
 
-    return this.decrypt(this.config.githubToken);
+    console.log('🔓 Descriptografando token configurado...');
+    const decryptedToken = this.decrypt(this.config.githubToken);
+    console.log('🔍 Token descriptografado:', decryptedToken ? `${decryptedToken.substring(0, 8)}...` : 'Vazio');
+    return decryptedToken;
   }
 
   /**

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Settings, Github, Eye, EyeOff, TestTube, CheckCircle, XCircle, AlertTriangle, Shield } from 'lucide-react';
-import axios from 'axios';
+import { api } from '../services/api';
 import toast from 'react-hot-toast';
 
 interface GitHubConfig {
@@ -37,7 +37,7 @@ export function ConfigPage() {
 
   const loadConfig = async () => {
     try {
-      const response = await axios.get('/api/config/github/status');
+      const response = await api.get('/config/github/status');
       if (response.data.success) {
         setConfig(response.data.config);
         setConnectionStatus(response.data.connectionStatus);
@@ -53,6 +53,9 @@ export function ConfigPage() {
   };
 
   const handleSaveToken = async () => {
+    console.log('🔧 handleSaveToken - Início');
+    console.log('Token input:', tokenInput ? `${tokenInput.substring(0, 8)}...` : 'vazio');
+    
     if (!tokenInput.trim()) {
       toast.error('Token é obrigatório');
       return;
@@ -65,10 +68,12 @@ export function ConfigPage() {
 
     setSaving(true);
     try {
-      const response = await axios.post('/api/config/github/token', {
+      console.log('📡 Enviando requisição para /config/github/token');
+      const response = await api.post('/config/github/token', {
         token: tokenInput.trim(),
         testConnection: true
       });
+      console.log('✅ Resposta recebida:', response.data);
 
       if (response.data.success) {
         toast.success('Token GitHub configurado com sucesso!');
@@ -78,6 +83,8 @@ export function ConfigPage() {
         setShowTokenInput(false);
       }
     } catch (error: any) {
+      console.error('❌ Erro na requisição:', error);
+      console.error('Dados da resposta:', error.response?.data);
       const message = error.response?.data?.message || error.response?.data?.error || 'Erro ao salvar token';
       toast.error(message);
     } finally {
@@ -93,7 +100,7 @@ export function ConfigPage() {
 
     setSaving(true);
     try {
-      const response = await axios.post('/api/config/github/repo', {
+      const response = await api.post('/config/github/repo', {
         owner: ownerInput.trim(),
         repo: repoInput.trim()
       });
@@ -113,7 +120,7 @@ export function ConfigPage() {
   const handleTestConnection = async () => {
     setTesting(true);
     try {
-      const response = await axios.post('/api/config/github/test');
+      const response = await api.post('/config/github/test');
       
       if (response.data.success) {
         toast.success('Conexão testada com sucesso!');
@@ -142,7 +149,7 @@ export function ConfigPage() {
 
     setSaving(true);
     try {
-      const response = await axios.delete('/api/config/github/token');
+      const response = await api.delete('/config/github/token');
       
       if (response.data.success) {
         toast.success('Token removido com sucesso!');

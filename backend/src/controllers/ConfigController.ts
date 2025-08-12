@@ -28,9 +28,12 @@ export class ConfigController {
    */
   static async setGitHubToken(req: Request, res: Response): Promise<void> {
     try {
+      console.log('🔧 ConfigController.setGitHubToken - Início');
       const { token, testConnection = true } = req.body;
+      console.log('🔧 Token recebido:', token ? `${token.substring(0, 8)}...` : 'null');
 
       if (!token || typeof token !== 'string') {
+        console.log('❌ Token inválido ou vazio');
         res.status(400).json({
           success: false,
           error: 'Token é obrigatório'
@@ -40,9 +43,11 @@ export class ConfigController {
 
       // Remover espaços em branco
       const cleanToken = token.trim();
+      console.log('🔧 Token limpo:', `${cleanToken.substring(0, 8)}...`);
 
       // Validação básica do formato
       if (!cleanToken.startsWith('ghp_') && !cleanToken.startsWith('github_pat_')) {
+        console.log('❌ Formato de token inválido');
         res.status(400).json({
           success: false,
           error: 'Formato de token GitHub inválido. Use tokens que começam com ghp_ ou github_pat_'
@@ -51,14 +56,19 @@ export class ConfigController {
       }
 
       // Salvar token (será criptografado automaticamente)
+      console.log('💾 Salvando token...');
       configService.setGitHubToken(cleanToken);
+      console.log('✅ Token salvo com sucesso');
 
       // Testar conexão se solicitado
       let connectionTest = null;
       if (testConnection) {
+        console.log('🔍 Testando conexão GitHub...');
         connectionTest = await configService.testGitHubConnection();
+        console.log('🔍 Resultado do teste:', connectionTest);
         
         if (!connectionTest.success) {
+          console.log('❌ Teste de conexão falhou, removendo token');
           // Remover token se a conexão falhou
           configService.removeGitHubToken();
           
@@ -72,6 +82,10 @@ export class ConfigController {
       }
 
       const config = configService.getPublicConfig();
+      console.log('✅ Configuração finalizada:', {
+        hasToken: config.hasToken,
+        maskedToken: config.maskedToken
+      });
 
       res.json({
         success: true,
@@ -80,7 +94,7 @@ export class ConfigController {
         connectionTest
       });
     } catch (error: any) {
-      console.error('Erro ao configurar token GitHub:', error);
+      console.error('❌ Erro ao configurar token GitHub:', error);
       res.status(500).json({
         success: false,
         error: 'Erro ao configurar token',
