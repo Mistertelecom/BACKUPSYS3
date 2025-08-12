@@ -105,7 +105,7 @@ check_for_updates_smart() {
     progress "Verificando atualizações..."
     
     # Fetch mais eficiente - apenas a branch main
-    git fetch origin main --depth=1 --quiet
+    git fetch origin main --depth=1 2>/dev/null
     
     REMOTE=$(git rev-parse origin/main)
     LOCAL=$(git rev-parse HEAD)
@@ -174,7 +174,7 @@ download_updates_fast() {
     fi
     
     # Pull otimizado
-    git pull origin main --quiet
+    git pull origin main 2>/dev/null
     
     success "Atualizações baixadas"
 }
@@ -203,9 +203,9 @@ rebuild_containers_smart() {
         
         # Build paralelo sem cache apenas quando necessário
         if [ "$USE_CACHE" = true ]; then
-            docker-compose build --parallel --quiet
+            docker-compose build --parallel 2>/dev/null
         else
-            docker-compose build --no-cache --parallel --quiet
+            docker-compose build --no-cache --parallel 2>/dev/null
         fi
         
         success "Containers rebuilt"
@@ -220,15 +220,15 @@ update_system_fast() {
     
     # Down mais rápido
     log "Parando containers..."
-    docker-compose down --timeout 10 --quiet || {
+    docker-compose down --timeout 10 2>/dev/null || {
         warning "Forçando parada..."
-        docker-compose kill --quiet
-        docker-compose rm -f --quiet
+        docker-compose kill 2>/dev/null
+        docker-compose rm -f 2>/dev/null
     }
     
     # Up otimizado
     log "Iniciando containers..."
-    docker-compose up -d --quiet --remove-orphans
+    docker-compose up -d --remove-orphans 2>/dev/null
     
     success "Sistema atualizado"
 }
@@ -287,7 +287,7 @@ health_check_fast() {
 rollback_fast() {
     error "Iniciando rollback..."
     
-    docker-compose down --quiet
+    docker-compose down 2>/dev/null
     
     # Restaurar apenas essenciais em paralelo
     {
@@ -305,7 +305,7 @@ rollback_fast() {
     
     wait
     
-    docker-compose up -d --quiet
+    docker-compose up -d 2>/dev/null
     success "Rollback concluído"
 }
 
@@ -315,7 +315,7 @@ cleanup_fast() {
     
     # Limpeza em background
     {
-        docker system prune -f --quiet
+        docker system prune -f 2>/dev/null
         [ -d "backups" ] && {
             cd backups
             ls -t | tail -n +4 | xargs -r rm -rf  # Manter apenas 3 backups
