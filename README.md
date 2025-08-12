@@ -167,6 +167,28 @@ docker-compose down
 docker-compose down -v
 ```
 
+### Scripts de Atualização Otimizados
+
+#### Quick Update (Recomendado)
+```bash
+# Status do sistema
+./quick-update.sh status
+
+# Perfis de velocidade disponíveis:
+./quick-update.sh lightning --auto    # 30-60s - Ultra rápido
+./quick-update.sh fast --cleanup      # 1-2min - Rápido com cache
+./quick-update.sh safe               # 2-3min - Seguro com validações
+./quick-update.sh production --auto  # 3-5min - Produção completa
+```
+
+#### Update Tradicional
+```bash
+# Script original (compatibilidade)
+./update.sh
+```
+
+**Recomendação**: Use `./quick-update.sh fast` para atualizações do dia a dia e `./quick-update.sh production` para deploys importantes.
+
 ## 📁 Estrutura do Projeto
 
 ```
