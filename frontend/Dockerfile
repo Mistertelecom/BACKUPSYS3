@@ -3,6 +3,9 @@
 # Stage 1: Build
 FROM node:18-alpine as builder
 
+# Instalar Git
+RUN apk add --no-cache git
+
 WORKDIR /app
 
 # Copiar package.json e package-lock.json
@@ -20,8 +23,8 @@ RUN npm run build
 # Stage 2: Servidor Nginx
 FROM nginx:alpine
 
-# Instalar wget e curl para health checks
-RUN apk add --no-cache wget curl
+# Instalar wget, curl e git para health checks e operações de versionamento
+RUN apk add --no-cache wget curl git
 
 # Copiar arquivos buildados para nginx
 COPY --from=builder /app/dist /usr/share/nginx/html
