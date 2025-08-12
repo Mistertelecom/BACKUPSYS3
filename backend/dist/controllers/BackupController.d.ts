@@ -6,5 +6,6 @@ export declare class BackupController {
     static download(req: Request, res: Response): Promise<void>;
     static delete(req: Request, res: Response): Promise<void>;
     static getRecent(req: Request, res: Response): Promise<void>;
+    static syncToCloud(req: Request, res: Response): Promise<void>;
 }
 //# sourceMappingURL=BackupController.d.ts.map

@@ -106,7 +106,7 @@ export function Sidebar() {
         
         <button
           onClick={logout}
-          className="w-full flex items-center px-4 py-3 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white rounded-xl transition-all duration-200"
+          className="w-full flex items-center px-4 py-3 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white rounded-xl transition-all duration-200 bg-transparent border-none shadow-none focus:outline-none focus:bg-gray-700 focus:text-white"
         >
           <LogOut className="mr-3 h-5 w-5" />
           Logout

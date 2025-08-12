@@ -9,7 +9,7 @@ const bcryptjs_1 = __importDefault(require("bcryptjs"));
 class UserModel {
     static async findByUsername(username) {
         return new Promise((resolve, reject) => {
-            const sql = 'SELECT * FROM users WHERE username = ?';
+            const sql = 'SELECT * FROM users WHERE username = ? AND is_active = 1';
             database_1.database.getDatabase().get(sql, [username], (err, row) => {
                 if (err) {
                     reject(err);
@@ -22,7 +22,7 @@ class UserModel {
     }
     static async findById(id) {
         return new Promise((resolve, reject) => {
-            const sql = 'SELECT * FROM users WHERE id = ?';
+            const sql = 'SELECT * FROM users WHERE id = ? AND is_active = 1';
             database_1.database.getDatabase().get(sql, [id], (err, row) => {
                 if (err) {
                     reject(err);

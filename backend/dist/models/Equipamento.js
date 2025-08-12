@@ -115,6 +115,92 @@ class EquipamentoModel {
             });
         });
     }
+    static async updateSSHConfig(id, sshConfig) {
+        return new Promise((resolve, reject) => {
+            const sql = `
+        UPDATE equipamentos SET 
+          ssh_enabled = ?,
+          ssh_port = ?,
+          ssh_username = ?,
+          ssh_password = ?,
+          ssh_private_key = ?,
+          auto_backup_enabled = ?,
+          auto_backup_schedule = ?
+        WHERE id = ?
+      `;
+            const values = [
+                sshConfig.ssh_enabled ? 1 : 0,
+                sshConfig.ssh_port,
+                sshConfig.ssh_username,
+                sshConfig.ssh_password,
+                sshConfig.ssh_private_key,
+                sshConfig.auto_backup_enabled ? 1 : 0,
+                sshConfig.auto_backup_schedule,
+                id
+            ];
+            database_1.database.getDatabase().run(sql, values, function (err) {
+                if (err) {
+                    reject(err);
+                }
+                else {
+                    resolve(this.changes > 0);
+                }
+            });
+        });
+    }
+    static async getWithAutoBackupEnabled() {
+        return new Promise((resolve, reject) => {
+            const sql = `
+        SELECT * FROM equipamentos 
+        WHERE auto_backup_enabled = 1 AND (ssh_enabled = 1 OR http_enabled = 1)
+        ORDER BY nome
+      `;
+            database_1.database.getDatabase().all(sql, [], (err, rows) => {
+                if (err) {
+                    reject(err);
+                }
+                else {
+                    resolve(rows);
+                }
+            });
+        });
+    }
+    static async getSSHEnabled() {
+        return new Promise((resolve, reject) => {
+            const sql = `
+        SELECT * FROM equipamentos 
+        WHERE ssh_enabled = 1
+        ORDER BY nome
+      `;
+            database_1.database.getDatabase().all(sql, [], (err, rows) => {
+                if (err) {
+                    reject(err);
+                }
+                else {
+                    resolve(rows);
+                }
+            });
+        });
+    }
+    static async getAutoBackupEnabled() {
+        return new Promise((resolve, reject) => {
+            const sql = `
+        SELECT * FROM equipamentos 
+        WHERE (ssh_enabled = 1 OR http_enabled = 1)
+        AND auto_backup_enabled = 1
+        AND auto_backup_schedule IS NOT NULL
+        ORDER BY nome
+      `;
+            database_1.database.getDatabase().all(sql, [], (err, rows) => {
+                if (err) {
+                    reject(err);
+                }
+                else {
+                    resolve(rows);
+                }
+            });
+        });
+    }
 }
 exports.EquipamentoModel = EquipamentoModel;
 //# sourceMappingURL=Equipamento.js.map

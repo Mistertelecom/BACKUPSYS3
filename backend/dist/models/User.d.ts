@@ -2,7 +2,10 @@ export interface User {
     id?: number;
     username: string;
     password: string;
+    role?: string;
+    is_active?: boolean;
     created_at?: string;
+    updated_at?: string;
 }
 export declare class UserModel {
     static findByUsername(username: string): Promise<User | null>;

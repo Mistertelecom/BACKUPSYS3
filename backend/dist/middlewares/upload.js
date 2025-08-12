@@ -7,7 +7,16 @@ exports.handleUploadError = exports.uploadSingle = exports.upload = void 0;
 const multer_1 = __importDefault(require("multer"));
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
-const allowedExtensions = process.env.ALLOWED_EXTENSIONS?.split(',') || ['.zip', '.tar.gz', '.bak'];
+const networkEquipmentExtensions = [
+    '.zip', '.tar.gz', '.bak', '.backup',
+    '.rsc', '.export', '.backup',
+    '.cfg', '.json', '.backup',
+    '.cfg', '.json', '.backup',
+    '.cfg', '.dat', '.zip', '.tar', '.xml', '.backup',
+    '.cfg', '.db', '.backup', '.dat', '.xml',
+    '.cfg', '.backup', '.dat', '.xml'
+];
+const allowedExtensions = process.env.ALLOWED_EXTENSIONS?.split(',') || networkEquipmentExtensions;
 const maxFileSize = parseInt(process.env.MAX_FILE_SIZE || '104857600');
 const storage = multer_1.default.diskStorage({
     destination: (req, file, cb) => {
@@ -26,14 +35,32 @@ const storage = multer_1.default.diskStorage({
         cb(null, filename);
     }
 });
+const equipmentTypeExtensions = {
+    'mikrotik': ['.rsc', '.export', '.backup', '.cfg'],
+    'ubiquiti': ['.cfg', '.json', '.backup', '.unf'],
+    'mimosa': ['.cfg', '.json', '.backup'],
+    'huawei': ['.cfg', '.dat', '.zip', '.tar', '.xml', '.backup'],
+    'fiberhome': ['.cfg', '.db', '.backup', '.dat', '.xml'],
+    'parks': ['.cfg', '.backup', '.dat', '.xml']
+};
 const fileFilter = (req, file, cb) => {
     const fileExtension = path_1.default.extname(file.originalname).toLowerCase();
+    const fileName = file.originalname.toLowerCase();
     if (allowedExtensions.includes(fileExtension)) {
         cb(null, true);
+        return;
     }
-    else {
-        cb(new Error(`Extensão de arquivo não permitida. Permitidas: ${allowedExtensions.join(', ')}`));
+    if (!fileExtension) {
+        if (fileName.includes('export') || fileName.includes('backup') || fileName.includes('config')) {
+            cb(null, true);
+            return;
+        }
     }
+    if (fileName.endsWith('.tar.gz') || fileName.endsWith('.tar.bz2')) {
+        cb(null, true);
+        return;
+    }
+    cb(new Error(`Extensão de arquivo não permitida. Permitidas: ${allowedExtensions.join(', ')}`));
 };
 exports.upload = (0, multer_1.default)({
     storage,

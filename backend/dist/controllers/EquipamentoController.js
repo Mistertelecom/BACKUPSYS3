@@ -4,6 +4,7 @@ exports.EquipamentoController = exports.equipamentoValidation = void 0;
 const express_validator_1 = require("express-validator");
 const Equipamento_1 = require("../models/Equipamento");
 const Backup_1 = require("../models/Backup");
+const SchedulerService_1 = require("../services/SchedulerService");
 exports.equipamentoValidation = [
     (0, express_validator_1.body)('nome').notEmpty().withMessage('Nome é obrigatório'),
     (0, express_validator_1.body)('ip').notEmpty().withMessage('IP é obrigatório').isIP().withMessage('IP inválido'),
@@ -75,6 +76,7 @@ class EquipamentoController {
     static async delete(req, res) {
         try {
             const { id } = req.params;
+            await SchedulerService_1.schedulerService.removeAutoBackupJob(parseInt(id));
             const deleted = await Equipamento_1.EquipamentoModel.delete(parseInt(id));
             if (!deleted) {
                 res.status(404).json({ error: 'Equipamento não encontrado' });
