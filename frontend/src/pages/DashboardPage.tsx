@@ -12,6 +12,8 @@ interface DashboardStats {
   totalBackupJobs: number;
   activeBackupJobs: number;
   scheduledJobs: number;
+  autoBackupJobs: number;
+  totalActiveJobs: number;
   equipamentosWithBackups: number;
   recentBackups: any[];
   backupsByProvider: Record<string, number>;
@@ -221,8 +223,11 @@ export function DashboardPage() {
         <div className="stats-card">
           <div className="flex items-center justify-between">
             <div className="flex-1">
-              <p className="text-sm font-medium text-gray-600 mb-1">Total Jobs</p>
-              <p className="text-3xl font-bold text-gray-900">{backupJobsStats?.total || 0}</p>
+              <p className="text-sm font-medium text-gray-600 mb-1">Jobs Programados</p>
+              <p className="text-3xl font-bold text-gray-900">{(backupJobsStats?.total || 0) + (stats?.autoBackupJobs || 0)}</p>
+              <p className="text-xs text-gray-500 mt-1">
+                {stats?.autoBackupJobs || 0} automáticos + {backupJobsStats?.total || 0} manuais
+              </p>
             </div>
             <div className="icon-container bg-indigo-100">
               <Database className="h-6 w-6 text-indigo-600" />
@@ -234,7 +239,10 @@ export function DashboardPage() {
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <p className="text-sm font-medium text-gray-600 mb-1">Jobs Ativos</p>
-              <p className="text-3xl font-bold text-gray-900">{backupJobsStats?.active || 0}</p>
+              <p className="text-3xl font-bold text-gray-900">{stats?.totalActiveJobs || 0}</p>
+              <p className="text-xs text-gray-500 mt-1">
+                {stats?.autoBackupJobs || 0} automáticos ativos
+              </p>
             </div>
             <div className="icon-container bg-green-100">
               <Play className="h-6 w-6 text-green-600" />

@@ -443,6 +443,24 @@ backup-date ${new Date().toISOString()}
     return this.autoBackupJobs.size;
   }
 
+  getAutoBackupJobsDetails(): any[] {
+    // Return detailed info about active auto backup jobs
+    const details: any[] = [];
+    this.autoBackupJobs.forEach((job, equipamentoId) => {
+      details.push({
+        equipamento_id: equipamentoId,
+        is_active: true,
+        type: 'auto_backup',
+        status: 'scheduled'
+      });
+    });
+    return details;
+  }
+
+  getTotalActiveJobs(): number {
+    return this.scheduledJobs.size + this.autoBackupJobs.size;
+  }
+
   stop() {
     this.scheduledJobs.forEach((job, id) => {
       job.stop();
