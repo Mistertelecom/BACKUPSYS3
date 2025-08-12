@@ -1,0 +1,35 @@
+{
+  "version": "1.0.2",
+  "updatedAt": "2025-01-12T00:00:00.000Z",
+  "buildInfo": {
+    "timestamp": "2025-01-12T00:00:00.000Z",
+    "nodeVersion": "20.0.0",
+    "platform": "docker",
+    "environment": "production"
+  },
+  "changelog": {
+    "version": "1.0.2",
+    "date": "2025-01-12T00:00:00.000Z",
+    "type": "stable",
+    "title": "Sistema de Backup Automático v1.0.2",
+    "description": "Correções de bugs e melhorias de estabilidade",
+    "features": [
+      "Correção do botão logout no menu lateral",
+      "Git instalado nos containers Docker",
+      "Sistema de atualização robusto",
+      "Melhor tratamento de erros"
+    ],
+    "improvements": [
+      "Interface de usuário consistente",
+      "Tratamento de erros aprimorado",
+      "Compatibilidade com containers Docker",
+      "Sistema de fallback para repositórios Git"
+    ],
+    "fixes": [
+      "Botão logout com tema consistente",
+      "Erro de repositório Git em containers",
+      "Estilos CSS conflitantes",
+      "Configuração de Git em Docker"
+    ]
+  }
+}

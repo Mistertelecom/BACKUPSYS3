@@ -164,12 +164,54 @@ class GitHubService {
    */
   async getSystemStatus(): Promise<SystemStatus> {
     try {
-      // Informações do Git
-      const { stdout: branch } = await execAsync('git rev-parse --abbrev-ref HEAD');
-      const { stdout: status } = await execAsync('git status --porcelain');
-      const { stdout: lastCommit } = await execAsync('git log -1 --pretty=format:"%H|%ci|%s"');
+      let currentBranch = 'main';
+      let hasLocalChanges = false;
+      let lastCommit = {
+        hash: 'N/A',
+        date: new Date().toISOString(),
+        message: 'Sistema executado fora de repositório Git'
+      };
 
-      const [hash, date, message] = lastCommit.trim().split('|');
+      // Verificar se estamos em um repositório Git
+      try {
+        await execAsync('git rev-parse --is-inside-work-tree');
+        
+        // Se chegou aqui, estamos em um repo Git
+        const { stdout: branch } = await execAsync('git rev-parse --abbrev-ref HEAD');
+        const { stdout: status } = await execAsync('git status --porcelain');
+        
+        currentBranch = branch.trim();
+        hasLocalChanges = status.trim().length > 0;
+
+        try {
+          const { stdout: lastCommitInfo } = await execAsync('git log -1 --pretty=format:"%H|%ci|%s"');
+          const [hash, date, message] = lastCommitInfo.trim().split('|');
+          lastCommit = {
+            hash: hash.trim(),
+            date: date.trim(),
+            message: message.trim()
+          };
+        } catch (logError) {
+          console.warn('Não foi possível obter informações do último commit:', logError);
+        }
+      } catch (gitError) {
+        console.log('Sistema não está executando em um repositório Git - modo container detectado');
+        
+        // Em modo container, usar informações do version.json se disponível
+        try {
+          const versionPath = path.join(process.cwd(), 'version.json');
+          if (fs.existsSync(versionPath)) {
+            const versionData = JSON.parse(fs.readFileSync(versionPath, 'utf-8'));
+            lastCommit = {
+              hash: 'container-build',
+              date: versionData.updatedAt || versionData.buildInfo?.timestamp || new Date().toISOString(),
+              message: `Container v${versionData.version || '1.0.0'} - Build em produção`
+            };
+          }
+        } catch (versionError) {
+          console.warn('Não foi possível ler version.json:', versionError);
+        }
+      }
 
       // Informações do disco
       let diskSpace = { free: 0, used: 0, total: 0 };
@@ -182,18 +224,25 @@ class GitHubService {
       }
 
       return {
-        currentBranch: branch.trim(),
-        hasLocalChanges: status.trim().length > 0,
-        lastCommit: {
-          hash: hash.trim(),
-          date: date.trim(),
-          message: message.trim()
-        },
+        currentBranch,
+        hasLocalChanges,
+        lastCommit,
         diskSpace
       };
     } catch (error: any) {
       console.error('Erro ao obter status do sistema:', error);
-      throw new Error(`Erro ao obter status do sistema: ${error.message}`);
+      
+      // Retorno de fallback para evitar quebrar a aplicação
+      return {
+        currentBranch: 'main',
+        hasLocalChanges: false,
+        lastCommit: {
+          hash: 'error',
+          date: new Date().toISOString(),
+          message: `Erro ao obter status: ${error.message}`
+        },
+        diskSpace: { free: 0, used: 0, total: 0 }
+      };
     }
   }
 
