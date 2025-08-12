@@ -91,7 +91,7 @@ export function Sidebar() {
         )}
       </nav>
 
-      <div className="p-4 border-t border-gray-700">
+      <div className="p-4 border-t border-gray-700 bg-gray-900">
         <div className="flex items-center space-x-3 mb-4">
           <div className="w-10 h-10 bg-gray-600 rounded-xl flex items-center justify-center">
             <span className="text-sm font-medium">
