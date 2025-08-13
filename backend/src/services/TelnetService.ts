@@ -59,7 +59,7 @@ export class TelnetService {
       });
 
       result.ping.success = pingResult.alive;
-      result.ping.time = pingResult.time === 'unknown' ? undefined : parseFloat(pingResult.time as string);
+      result.ping.time = pingResult.time === 'unknown' ? undefined : parseFloat(String(pingResult.time));
       result.isOnline = pingResult.alive;
 
       if (!pingResult.alive) {
