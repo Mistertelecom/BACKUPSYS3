@@ -122,18 +122,49 @@ export class SSHService {
       const isHuawei = config.equipmentType?.toLowerCase().includes('huawei') || 
                        config.equipmentType?.toLowerCase().includes('ne20') || 
                        config.equipmentType?.toLowerCase().includes('ne40') || false;
-      const timeout = isHuawei ? 20000 : (config.timeout || this.connectionTimeout);
+      const timeout = isHuawei ? 30000 : (config.timeout || this.connectionTimeout);
       
       console.log(`🔧 Configurando SSH - Equipamento: ${config.equipmentType || 'Desconhecido'}, Timeout: ${timeout}ms`);
       
+      // Para equipamentos NE20/Huawei muito antigos, usar configuração mínima
       const connectionConfig: any = {
         host: config.host,
         port: config.port,
         username: config.username,
         readyTimeout: timeout,
-        algorithms: {
+        keepaliveInterval: 0, // Desabilitar keepalive
+        keepaliveCountMax: 0
+      };
+
+      // Se é equipamento NE20, usar apenas algoritmos básicos suportados
+      if (config.equipmentType?.toLowerCase().includes('ne20')) {
+        console.log(`⚙️ Configuração especial para NE20 - algoritmos legados extremos`);
+        // Tentar sem especificar algoritmos para ver se o SSH negocia automaticamente
+        // ou usar configuração muito básica
+        console.log(`⚠️ AVISO: NE20 pode requerer configurações SSH legadas não suportadas pelo node-ssh`);
+        console.log(`💡 RECOMENDAÇÃO: Considere usar Telnet para este equipamento específico`);
+        
+        connectionConfig.algorithms = {
           kex: [
-            // Algoritmos legacy para NE20 e equipamentos antigos
+            'diffie-hellman-group1-sha1'  // Mais básico possível
+          ],
+          cipher: [
+            '3des-cbc',
+            'aes128-cbc'
+          ],
+          serverHostKey: [
+            'ssh-dss',
+            'ssh-rsa'
+          ],
+          hmac: [
+            'hmac-sha1'
+          ]
+        };
+      } else {
+        // Configuração completa para outros equipamentos
+        connectionConfig.algorithms = {
+          kex: [
+            // Algoritmos legacy para equipamentos antigos
             'diffie-hellman-group1-sha1',
             'diffie-hellman-group14-sha1',
             'diffie-hellman-group14-sha256',
@@ -149,23 +180,22 @@ export class SSHService {
             'curve25519-sha256@libssh.org'
           ],
           cipher: [
-            // Suporte legacy para NE20
-            '3des-cbc',
-            'des-cbc',
-            'aes128-cbc',
-            'aes192-cbc',
-            'aes256-cbc',
-            // Algoritmos modernos
+            // Algoritmos modernos primeiro
             'aes128-ctr',
             'aes192-ctr',
             'aes256-ctr',
             'aes128-gcm',
             'aes128-gcm@openssh.com',
             'aes256-gcm',
-            'aes256-gcm@openssh.com'
+            'aes256-gcm@openssh.com',
+            // Suporte legacy
+            '3des-cbc',
+            'aes128-cbc',
+            'aes192-cbc',
+            'aes256-cbc'
           ],
           serverHostKey: [
-            // Suporte DSA/RSA para NE20
+            // Suporte DSA/RSA
             'ssh-dss',
             'ssh-rsa',
             'rsa-sha2-256',
@@ -176,15 +206,17 @@ export class SSHService {
             'ssh-ed25519'
           ],
           hmac: [
-            'hmac-md5',
-            'hmac-sha1',
-            'hmac-sha1-96',
-            'hmac-md5-96',
+            // Algoritmos modernos primeiro
             'hmac-sha2-256',
-            'hmac-sha2-512'
+            'hmac-sha2-512',
+            'hmac-sha1',
+            // Legacy
+            'hmac-sha1-96',
+            'hmac-md5',
+            'hmac-md5-96'
           ]
-        }
-      };
+        };
+      }
 
       if (config.privateKey) {
         connectionConfig.privateKey = config.privateKey;

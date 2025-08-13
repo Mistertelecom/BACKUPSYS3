@@ -117,8 +117,9 @@ export function EquipamentoForm({
             <option value="Ubiquiti">Ubiquiti</option>
             <option value="Mimosa">Mimosa</option>
             <option value="Huawei NE">Huawei NE*</option>
-            <option value="OLT FiberHome">OLT FiberHome</option>
-            <option value="OLT Parks">OLT Parks</option>
+            <option value="Huawei NE20">Huawei NE20 (SSH DSA/RSA)</option>
+            <option value="OLT FiberHome">OLT FiberHome (Telnet)</option>
+            <option value="OLT Parks">OLT Parks (Telnet)</option>
           </optgroup>
           <optgroup label="Outros">
             <option value="Servidor">Servidor</option>
