@@ -2,34 +2,47 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DashboardController = void 0;
 const Equipamento_1 = require("../models/Equipamento");
+const Backup_1 = require("../models/Backup");
+const User_1 = require("../models/User");
 const Provider_1 = require("../models/Provider");
 const BackupJob_1 = require("../models/BackupJob");
+const SchedulerService_1 = require("../services/SchedulerService");
 const ProviderService_1 = require("../services/ProviderService");
 class DashboardController {
     static async getStats(req, res) {
-        console.log('🔍 Dashboard: MÉTODO CHAMADO!');
         try {
+            const [equipamentos, backups, users, recentBackups, providers, backupJobs] = await Promise.all([
+                Equipamento_1.EquipamentoModel.getAll(),
+                Backup_1.BackupModel.getAll(),
+                User_1.UserModel.getAllUsers(),
+                Backup_1.BackupModel.getRecentBackups(5),
+                Provider_1.ProviderModel.getAll(),
+                BackupJob_1.BackupJobModel.getAll()
+            ]);
+            const autoBackupJobsCount = await DashboardController.countAutoBackupJobs();
+            const scheduledJobsCount = SchedulerService_1.schedulerService.getScheduledJobsCount() || 0;
             const stats = {
-                totalEquipamentos: 2,
-                totalBackups: 0,
-                totalUsers: 1,
-                totalProviders: 5,
-                activeProviders: 1,
-                totalBackupJobs: 0,
-                activeBackupJobs: 0,
-                scheduledJobs: 0,
-                autoBackupJobs: 2,
-                totalActiveJobs: 2,
-                recentBackups: [],
-                equipamentosWithBackups: 0,
-                backupsByProvider: {},
-                backupsByStatus: {}
+                totalEquipamentos: equipamentos.length,
+                totalBackups: backups.length,
+                totalUsers: users.length,
+                totalProviders: providers.length,
+                activeProviders: providers.filter(p => p.is_active).length,
+                totalBackupJobs: backupJobs.length,
+                activeBackupJobs: backupJobs.filter(j => j.is_active).length,
+                scheduledJobs: scheduledJobsCount,
+                autoBackupJobs: autoBackupJobsCount,
+                totalActiveJobs: scheduledJobsCount + autoBackupJobsCount,
+                recentBackups: recentBackups,
+                equipamentosWithBackups: equipamentos.filter(eq => {
+                    return backups.some(backup => backup.equipamento_id === eq.id);
+                }).length,
+                backupsByProvider: DashboardController.getBackupsByProvider(backups),
+                backupsByStatus: DashboardController.getBackupsByStatus(backups)
             };
-            console.log('🔍 Dashboard: RETORNANDO STATS:', JSON.stringify(stats, null, 2));
             res.json(stats);
         }
         catch (error) {
-            console.error('🔍 Dashboard: ERRO:', error);
+            console.error('Erro ao buscar estatísticas do dashboard:', error);
             res.status(500).json({ error: 'Erro interno do servidor' });
         }
     }
@@ -39,10 +52,6 @@ class DashboardController {
             const autoBackupEnabled = equipamentos.filter(eq => eq.auto_backup_enabled &&
                 eq.auto_backup_schedule &&
                 (eq.ssh_enabled || eq.http_enabled));
-            console.log(`🔍 countAutoBackupJobs: Encontrados ${autoBackupEnabled.length} equipamentos com backup automático`);
-            autoBackupEnabled.forEach(eq => {
-                console.log(`  - ${eq.nome} (ID: ${eq.id}) - Schedule: ${eq.auto_backup_schedule}`);
-            });
             return autoBackupEnabled.length;
         }
         catch (error) {
