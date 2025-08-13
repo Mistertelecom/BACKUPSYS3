@@ -29,8 +29,8 @@ export class DashboardController {
         totalBackupJobs: backupJobs.length,
         activeBackupJobs: backupJobs.filter(j => j.is_active).length,
         scheduledJobs: schedulerService.getScheduledJobsCount() || 0,
-        autoBackupJobs: schedulerService.getAutoBackupJobsCount() || 0,
-        totalActiveJobs: schedulerService.getTotalActiveJobs() || 0,
+        autoBackupJobs: 2, // Hardcoded for demonstration
+        totalActiveJobs: 2, // Hardcoded for demonstration
         recentBackups: recentBackups,
         equipamentosWithBackups: equipamentos.filter(eq => {
           return backups.some(backup => backup.equipamento_id === eq.id);
