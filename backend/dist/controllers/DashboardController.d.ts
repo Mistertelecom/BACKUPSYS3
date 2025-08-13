@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 export declare class DashboardController {
     static getStats(req: Request, res: Response): Promise<void>;
+    private static countAutoBackupJobs;
     static getEquipamentoStats(req: Request, res: Response): Promise<void>;
     static getProviderHealth(req: Request, res: Response): Promise<void>;
     static getBackupJobsStats(req: Request, res: Response): Promise<void>;
