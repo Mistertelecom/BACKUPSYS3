@@ -118,9 +118,11 @@ export class SSHService {
    */
   async connect(config: SSHConfig): Promise<NodeSSH> {
     try {
-      // Timeout específico para equipamentos Huawei (mais tolerante)
-      const isHuawei = config.equipmentType?.toLowerCase().includes('huawei') || false;
-      const timeout = isHuawei ? 15000 : (config.timeout || this.connectionTimeout);
+      // Timeout específico para equipamentos Huawei/NE (mais tolerante)
+      const isHuawei = config.equipmentType?.toLowerCase().includes('huawei') || 
+                       config.equipmentType?.toLowerCase().includes('ne20') || 
+                       config.equipmentType?.toLowerCase().includes('ne40') || false;
+      const timeout = isHuawei ? 20000 : (config.timeout || this.connectionTimeout);
       
       console.log(`🔧 Configurando SSH - Equipamento: ${config.equipmentType || 'Desconhecido'}, Timeout: ${timeout}ms`);
       
@@ -131,6 +133,7 @@ export class SSHService {
         readyTimeout: timeout,
         algorithms: {
           kex: [
+            // Algoritmos legacy para NE20 e equipamentos antigos
             'diffie-hellman-group1-sha1',
             'diffie-hellman-group14-sha1',
             'diffie-hellman-group14-sha256',
@@ -138,6 +141,7 @@ export class SSHService {
             'diffie-hellman-group18-sha512',
             'diffie-hellman-group-exchange-sha1',
             'diffie-hellman-group-exchange-sha256',
+            // Algoritmos modernos
             'ecdh-sha2-nistp256',
             'ecdh-sha2-nistp384',
             'ecdh-sha2-nistp521',
@@ -145,22 +149,39 @@ export class SSHService {
             'curve25519-sha256@libssh.org'
           ],
           cipher: [
+            // Suporte legacy para NE20
+            '3des-cbc',
+            'des-cbc',
+            'aes128-cbc',
+            'aes192-cbc',
+            'aes256-cbc',
+            // Algoritmos modernos
             'aes128-ctr',
             'aes192-ctr',
             'aes256-ctr',
             'aes128-gcm',
             'aes128-gcm@openssh.com',
             'aes256-gcm',
-            'aes256-gcm@openssh.com',
-            'aes256-cbc',
-            'aes128-cbc',
-            '3des-cbc'
+            'aes256-gcm@openssh.com'
+          ],
+          serverHostKey: [
+            // Suporte DSA/RSA para NE20
+            'ssh-dss',
+            'ssh-rsa',
+            'rsa-sha2-256',
+            'rsa-sha2-512',
+            'ecdsa-sha2-nistp256',
+            'ecdsa-sha2-nistp384',
+            'ecdsa-sha2-nistp521',
+            'ssh-ed25519'
           ],
           hmac: [
-            'hmac-sha2-256',
-            'hmac-sha2-512',
+            'hmac-md5',
             'hmac-sha1',
-            'hmac-md5'
+            'hmac-sha1-96',
+            'hmac-md5-96',
+            'hmac-sha2-256',
+            'hmac-sha2-512'
           ]
         }
       };

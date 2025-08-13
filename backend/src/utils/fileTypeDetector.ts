@@ -32,6 +32,12 @@ export const EQUIPMENT_FILE_TYPES: Record<string, FileTypeInfo> = {
     extensions: ['.cfg', '.dat', '.zip', '.tar', '.xml', '.backup'],
     mimeTypes: ['text/xml', 'application/zip', 'application/x-tar', 'application/octet-stream']
   },
+  ne20: {
+    equipment: 'Huawei NE20',
+    description: 'Arquivos de configuração Huawei NE20 Router (SSH DSA/RSA)',
+    extensions: ['.cfg', '.dat', '.backup', '.xml'],
+    mimeTypes: ['text/xml', 'application/octet-stream']
+  },
   fiberhome: {
     equipment: 'FiberHome OLT',
     description: 'Arquivos de configuração OLT FiberHome',
@@ -65,6 +71,10 @@ export class FileTypeDetector {
     
     if (name.includes('mimosa')) {
       return 'mimosa';
+    }
+    
+    if (name.includes('ne20')) {
+      return 'ne20';
     }
     
     if (name.includes('huawei') || name.includes('ne40') || name.includes('ne80') || name.includes('ne5000')) {
@@ -109,6 +119,7 @@ export class FileTypeDetector {
     if (equipmentTypeNormalized.includes('ubiquiti') && detectedType === 'ubiquiti') return true;
     if (equipmentTypeNormalized.includes('mimosa') && detectedType === 'mimosa') return true;
     if (equipmentTypeNormalized.includes('huawei') && detectedType === 'huawei') return true;
+    if (equipmentTypeNormalized.includes('ne20') && detectedType === 'ne20') return true;
     if (equipmentTypeNormalized.includes('fiberhome') && detectedType === 'fiberhome') return true;
     if (equipmentTypeNormalized.includes('parks') && detectedType === 'parks') return true;
     

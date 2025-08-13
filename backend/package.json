@@ -26,7 +26,8 @@
     "node-ssh": "^13.2.1",
     "ping": "^0.4.4",
     "sqlite3": "^5.1.6",
-    "ssh2": "^1.16.0"
+    "ssh2": "^1.16.0",
+    "telnet-client": "^2.2.6"
   },
   "devDependencies": {
     "@types/axios": "^0.9.36",

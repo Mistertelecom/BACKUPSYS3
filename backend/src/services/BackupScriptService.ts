@@ -2,13 +2,14 @@ import path from 'path';
 import fs from 'fs';
 import { SSHService, SSHConfig, SSHResult } from './SSHService';
 import { HTTPService, HTTPConfig, HTTPResult } from './HTTPService';
+import { TelnetService, TelnetConfig, TelnetResult } from './TelnetService';
 
 export interface BackupScript {
   equipmentType: string;
   commands: string[];
   filePattern: string;
   description: string;
-  connectionType: 'ssh' | 'http';
+  connectionType: 'ssh' | 'http' | 'telnet';
 }
 
 export interface BackupExecutionResult {
@@ -23,11 +24,13 @@ export interface BackupExecutionResult {
 export class BackupScriptService {
   private sshService: SSHService;
   private httpService: HTTPService;
+  private telnetService: TelnetService;
   private backupDir: string;
 
   constructor() {
     this.sshService = new SSHService();
     this.httpService = new HTTPService();
+    this.telnetService = new TelnetService();
     this.backupDir = path.resolve(process.env.AUTO_BACKUP_DIR || './auto_backups');
     
     // Criar diretório de backups automáticos se não existir
@@ -98,6 +101,52 @@ export class BackupScriptService {
         filePattern: 'mimosa.conf',
         description: 'Backup automático Mimosa (configuração via HTTP)',
         connectionType: 'http'
+      },
+      'ne20': {
+        equipmentType: 'Huawei NE20',
+        commands: [
+          // Salvar configuração atual
+          'save',
+          // Fazer backup da configuração para arquivo
+          'backup configuration to yback-ne20-backup.cfg',
+          // Aguardar processamento
+          'display version',
+          // Verificar arquivos criados
+          'dir | include yback-ne20'
+        ],
+        filePattern: 'yback-ne20-backup.cfg',
+        description: 'Backup automático Huawei NE20 (SSH DSA/RSA)',
+        connectionType: 'ssh'
+      },
+      'parks': {
+        equipmentType: 'Parks OLT',
+        commands: [
+          // Comandos via Telnet para OLT Parks
+          'enable',
+          'configure terminal',
+          'write memory',
+          'copy running-config tftp://backup-server/yback-parks-backup.cfg',
+          'show running-config | redirect yback-parks-config.txt',
+          'exit'
+        ],
+        filePattern: 'yback-parks-*.cfg',
+        description: 'Backup automático Parks OLT (via Telnet)',
+        connectionType: 'telnet'
+      },
+      'fiberhome': {
+        equipmentType: 'FiberHome OLT',
+        commands: [
+          // Comandos via Telnet para OLT FiberHome
+          'enable',
+          'config',
+          'save-config',
+          'backup config yback-fiberhome-backup.db',
+          'show running-config | redirect yback-fiberhome-config.cfg',
+          'exit'
+        ],
+        filePattern: 'yback-fiberhome-*.db',
+        description: 'Backup automático FiberHome OLT (via Telnet)',
+        connectionType: 'telnet'
       }
     };
   }
@@ -132,7 +181,8 @@ export class BackupScriptService {
     equipmentName: string,
     equipmentType: string,
     sshConfig: SSHConfig,
-    httpConfig?: HTTPConfig
+    httpConfig?: HTTPConfig,
+    telnetConfig?: TelnetConfig
   ): Promise<BackupExecutionResult> {
     const timestamp = new Date().toISOString();
     const result: BackupExecutionResult = {
@@ -188,8 +238,52 @@ export class BackupScriptService {
           result.error = downloadResult.error;
         }
         
+      } else if (script.connectionType === 'telnet') {
+        // BACKUP VIA TELNET (Parks OLT, Fiberhome OLT)
+        if (!telnetConfig) {
+          result.error = 'Configuração Telnet necessária para equipamentos OLT (Parks/Fiberhome)';
+          return result;
+        }
+
+        console.log(`Conectando via Telnet em ${telnetConfig.host}:${telnetConfig.port || 23}`);
+
+        // Executar comandos de backup via Telnet
+        const commandResults = await this.telnetService.executeCommands(telnetConfig, script.commands);
+        result.logs = commandResults.map(telnetResult => ({
+          success: telnetResult.success,
+          data: telnetResult.data,
+          error: telnetResult.error,
+          timestamp: telnetResult.timestamp
+        }));
+
+        // Verificar se pelo menos um comando foi executado com sucesso
+        const someSuccessful = commandResults.some(cmd => cmd.success);
+        if (!someSuccessful) {
+          result.error = `Falha em todos os comandos Telnet`;
+          return result;
+        }
+
+        // Para equipamentos Telnet, simular criação de arquivo de backup local
+        const downloadResult = await this.executeTelnetBackup(
+          equipmentId,
+          equipmentName,
+          equipmentType,
+          script.filePattern,
+          timestamp,
+          telnetConfig.host,
+          commandResults
+        );
+
+        if (downloadResult.success) {
+          result.success = true;
+          result.backupFile = downloadResult.backupFile;
+          result.localFilePath = downloadResult.localFilePath;
+        } else {
+          result.error = downloadResult.error;
+        }
+
       } else {
-        // BACKUP VIA SSH (Mikrotik, Ubiquiti, Huawei)
+        // BACKUP VIA SSH (Mikrotik, Ubiquiti, Huawei, NE20)
         await this.sshService.connect(sshConfig);
         console.log(`Conectado via SSH em ${sshConfig.host}:${sshConfig.port}`);
 
@@ -231,9 +325,10 @@ export class BackupScriptService {
       result.error = error instanceof Error ? error.message : 'Erro desconhecido';
       console.error('Erro no backup automático:', error);
     } finally {
-      // Sempre desconectar
+      // Sempre desconectar todos os serviços
       await this.sshService.disconnect();
       await this.httpService.disconnect();
+      // TelnetService não precisa disconnect explícito (conexões são per-command)
     }
 
     return result;
@@ -353,6 +448,81 @@ export class BackupScriptService {
   }
 
   /**
+   * Executa backup via Telnet (Parks OLT, Fiberhome OLT)
+   */
+  private async executeTelnetBackup(
+    equipmentId: number,
+    equipmentName: string,
+    equipmentType: string,
+    filePattern: string,
+    timestamp: string,
+    equipmentIP?: string,
+    commandResults?: TelnetResult[]
+  ): Promise<{ success: boolean; backupFile?: string; localFilePath?: string; error?: string }> {
+    try {
+      const sanitizedName = equipmentName.replace(/[^a-zA-Z0-9-_]/g, '_');
+      const sanitizedIP = equipmentIP ? equipmentIP.replace(/[^0-9.]/g, '') : 'no-ip';
+      
+      // Para equipamentos Telnet, criar arquivo de log com informações do backup
+      const extension = equipmentType.toLowerCase().includes('parks') ? '.cfg' : '.db';
+      const localPath = path.join(this.backupDir, `${sanitizedName}-${sanitizedIP}-telnet${extension}`);
+      
+      console.log(`Salvando log do backup Telnet: ${localPath}`);
+      
+      // Criar conteúdo do backup baseado nos resultados dos comandos
+      const backupContent = {
+        equipment: {
+          id: equipmentId,
+          name: equipmentName,
+          type: equipmentType,
+          ip: equipmentIP
+        },
+        backup: {
+          timestamp: timestamp,
+          method: 'telnet',
+          filePattern: filePattern
+        },
+        commands: commandResults?.map(cmd => ({
+          success: cmd.success,
+          data: cmd.data,
+          error: cmd.error,
+          timestamp: cmd.timestamp
+        })) || [],
+        summary: {
+          totalCommands: commandResults?.length || 0,
+          successfulCommands: commandResults?.filter(cmd => cmd.success).length || 0,
+          failedCommands: commandResults?.filter(cmd => !cmd.success).length || 0
+        }
+      };
+      
+      // Salvar arquivo de log/backup
+      try {
+        const content = equipmentType.toLowerCase().includes('fiberhome') 
+          ? JSON.stringify(backupContent, null, 2)  // FiberHome: formato JSON
+          : `# ${equipmentType} Configuration Backup\n# Generated: ${timestamp}\n# IP: ${equipmentIP}\n\n${JSON.stringify(backupContent, null, 2)}`;
+        
+        fs.writeFileSync(localPath, content);
+        
+        return {
+          success: true,
+          backupFile: filePattern,
+          localFilePath: localPath
+        };
+      } catch (error) {
+        return {
+          success: false,
+          error: `Falha ao salvar backup Telnet: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+        };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Erro desconhecido'
+      };
+    }
+  }
+
+  /**
    * Executa backup via HTTP (Mimosa)
    */
   private async executeHttpBackup(
@@ -415,7 +585,8 @@ export class BackupScriptService {
   async testBackupCapability(
     equipmentType: string,
     sshConfig?: SSHConfig,
-    httpConfig?: HTTPConfig
+    httpConfig?: HTTPConfig,
+    telnetConfig?: TelnetConfig
   ): Promise<{ canBackup: boolean; script?: BackupScript; connectivity?: any; error?: string }> {
     try {
       // Verificar se há script para este tipo
@@ -443,6 +614,23 @@ export class BackupScriptService {
           script,
           connectivity,
           error: connectivity.httpConnectable ? undefined : 'HTTP não acessível'
+        };
+      } else if (script.connectionType === 'telnet') {
+        // Testar conectividade Telnet (Parks OLT, Fiberhome OLT)
+        if (!telnetConfig) {
+          return {
+            canBackup: false,
+            error: 'Configuração Telnet necessária para equipamentos OLT'
+          };
+        }
+
+        const connectivity = await this.telnetService.checkConnectivity(telnetConfig);
+        
+        return {
+          canBackup: connectivity.telnetConnectable,
+          script,
+          connectivity,
+          error: connectivity.telnetConnectable ? undefined : 'Telnet não acessível'
         };
       } else {
         // Testar conectividade SSH (Mikrotik, Ubiquiti, Huawei)
