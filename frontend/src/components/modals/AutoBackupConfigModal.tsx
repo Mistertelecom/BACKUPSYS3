@@ -36,6 +36,7 @@ interface ConnectivityTest {
   isOnline: boolean;
   sshConnectable?: boolean;
   httpConnectable?: boolean;
+  telnetConnectable?: boolean;
   ping: {
     success: boolean;
     time?: number;
@@ -46,6 +47,10 @@ interface ConnectivityTest {
     error?: string;
   };
   http?: {
+    success: boolean;
+    error?: string;
+  };
+  telnet?: {
     success: boolean;
     error?: string;
   };
@@ -69,6 +74,10 @@ export const AutoBackupConfigModal: React.FC<AutoBackupConfigModalProps> = ({
     http_username: '',
     http_password: '',
     http_ignore_ssl: false,
+    telnet_enabled: false,
+    telnet_port: 23,
+    telnet_username: '',
+    telnet_password: '',
     auto_backup_enabled: false,
     auto_backup_schedule: '0 2 * * *'
   });
@@ -142,6 +151,10 @@ export const AutoBackupConfigModal: React.FC<AutoBackupConfigModalProps> = ({
         http_username: equipamento.http_username || '',
         http_password: equipamento.http_password || 'mimosa',
         http_ignore_ssl: equipamento.http_ignore_ssl || false,
+        telnet_enabled: false,
+        telnet_port: 23,
+        telnet_username: '',
+        telnet_password: '',
         auto_backup_enabled: equipamento.auto_backup_enabled || false,
         auto_backup_schedule: schedule
       });
@@ -171,13 +184,35 @@ export const AutoBackupConfigModal: React.FC<AutoBackupConfigModalProps> = ({
   };
 
   const handleTestConnectivity = async () => {
-    if (!formData.ssh_enabled) {
+    const equipmentInfo = getSupportedEquipmentInfo();
+    
+    if (equipmentInfo.connectionType === 'ssh' && !formData.ssh_enabled) {
       toast.error('Habilite SSH primeiro para testar conectividade');
       return;
     }
+    
+    if (equipmentInfo.connectionType === 'telnet' && !formData.telnet_enabled) {
+      toast.error('Habilite Telnet primeiro para testar conectividade');
+      return;
+    }
+    
+    if (equipmentInfo.connectionType === 'http' && !formData.http_enabled) {
+      toast.error('Habilite HTTP primeiro para testar conectividade');
+      return;
+    }
 
-    if (!formData.ssh_username || (!formData.ssh_password && !formData.ssh_private_key)) {
+    if (equipmentInfo.connectionType === 'ssh' && (!formData.ssh_username || (!formData.ssh_password && !formData.ssh_private_key))) {
       toast.error('Configure usuário e senha/chave para testar conectividade');
+      return;
+    }
+    
+    if (equipmentInfo.connectionType === 'telnet' && (!formData.telnet_username || !formData.telnet_password)) {
+      toast.error('Configure usuário e senha para testar conectividade Telnet');
+      return;
+    }
+    
+    if (equipmentInfo.connectionType === 'http' && !formData.http_password) {
+      toast.error('Configure senha para testar conectividade HTTP');
       return;
     }
 
@@ -192,10 +227,14 @@ export const AutoBackupConfigModal: React.FC<AutoBackupConfigModalProps> = ({
       setConnectivity(result.connectivity);
       setLastTest(new Date());
 
-      if (result.connectivity.sshConnectable) {
+      if (equipmentInfo.connectionType === 'ssh' && result.connectivity.sshConnectable) {
         toast.success('Conectividade SSH confirmada!');
+      } else if (equipmentInfo.connectionType === 'telnet' && result.connectivity.telnetConnectable) {
+        toast.success('Conectividade Telnet confirmada!');
+      } else if (equipmentInfo.connectionType === 'http' && result.connectivity.httpConnectable) {
+        toast.success('Conectividade HTTP confirmada!');
       } else {
-        toast.error('Falha na conectividade SSH');
+        toast.error(`Falha na conectividade ${equipmentInfo.connectionType.toUpperCase()}`);
       }
     } catch (error: any) {
       toast.error('Erro ao testar conectividade');
@@ -239,11 +278,32 @@ export const AutoBackupConfigModal: React.FC<AutoBackupConfigModalProps> = ({
         commands: ['Backup system.cfg', 'Cópia para /tmp', 'Download via SSH'],
         files: ['.cfg']
       };
+    } else if (type.includes('huawei') && type.includes('ne20')) {
+      return {
+        supported: true,
+        connectionType: 'telnet',
+        commands: ['Salvar configuração', 'Criar backup NE20', 'Backup via Telnet'],
+        files: ['.cfg']
+      };
     } else if (type.includes('huawei')) {
       return {
         supported: true,
         connectionType: 'ssh',
         commands: ['Salvar configuração', 'Criar backup', 'Download automático'],
+        files: ['.cfg']
+      };
+    } else if (type.includes('fiberhome') || type.includes('olt') && type.includes('fh')) {
+      return {
+        supported: true,
+        connectionType: 'telnet',
+        commands: ['Enable mode', 'Config mode', 'Save config', 'Backup database'],
+        files: ['.db', '.cfg']
+      };
+    } else if (type.includes('parks') || (type.includes('olt') && type.includes('parks'))) {
+      return {
+        supported: true,
+        connectionType: 'telnet',
+        commands: ['Enable mode', 'Configure terminal', 'Write memory', 'Save running-config'],
         files: ['.cfg']
       };
     } else if (type.includes('mimosa')) {
@@ -294,6 +354,13 @@ export const AutoBackupConfigModal: React.FC<AutoBackupConfigModalProps> = ({
                     Configure o acesso SSH para executar backups automatizados remotamente.
                   </p>
                 </div>
+              ) : equipmentInfo.connectionType === 'telnet' ? (
+                <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                  <h3 className="font-semibold text-orange-900 mb-2">Configuração Telnet</h3>
+                  <p className="text-sm text-orange-700">
+                    Configure o acesso Telnet para equipamentos OLT e NE20 legados.
+                  </p>
+                </div>
               ) : (
                 <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
                   <h3 className="font-semibold text-purple-900 mb-2">Configuração HTTP</h3>
@@ -314,6 +381,19 @@ export const AutoBackupConfigModal: React.FC<AutoBackupConfigModalProps> = ({
                   />
                   <label htmlFor="ssh_enabled" className="text-sm font-medium text-gray-700">
                     Habilitar SSH
+                  </label>
+                </div>
+              ) : equipmentInfo.connectionType === 'telnet' ? (
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="telnet_enabled"
+                    checked={formData.telnet_enabled}
+                    onChange={(e) => setFormData(prev => ({ ...prev, telnet_enabled: e.target.checked }))}
+                    className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                  />
+                  <label htmlFor="telnet_enabled" className="text-sm font-medium text-gray-700">
+                    Habilitar Telnet
                   </label>
                 </div>
               ) : (
@@ -381,6 +461,53 @@ export const AutoBackupConfigModal: React.FC<AutoBackupConfigModalProps> = ({
                     />
                     <p className="text-xs text-gray-500 mt-1">
                       Se fornecida, será usada no lugar da senha
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Configurações Telnet */}
+              {equipmentInfo.connectionType === 'telnet' && formData.telnet_enabled && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <InputField
+                      label="Porta Telnet"
+                      type="number"
+                      value={formData.telnet_port.toString()}
+                      onChange={(e) => setFormData(prev => ({ ...prev, telnet_port: parseInt(e.target.value) || 23 }))}
+                      placeholder="23"
+                    />
+                    <InputField
+                      label="Usuário Telnet"
+                      value={formData.telnet_username}
+                      onChange={(e) => setFormData(prev => ({ ...prev, telnet_username: e.target.value }))}
+                      placeholder="admin"
+                      required
+                    />
+                  </div>
+
+                  <div className="relative">
+                    <InputField
+                      label="Senha Telnet"
+                      type={showPassword ? "text" : "password"}
+                      value={formData.telnet_password}
+                      onChange={(e) => setFormData(prev => ({ ...prev, telnet_password: e.target.value }))}
+                      placeholder="Digite a senha Telnet"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-8 text-gray-400 hover:text-gray-600"
+                    >
+                      {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    </button>
+                  </div>
+
+                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                    <p className="text-sm text-orange-800">
+                      <strong>Telnet (OLTs/NE20):</strong> Porta padrão 23, sem criptografia<br/>
+                      <strong>Nota:</strong> Equipamentos legados que requerem conexão Telnet
                     </p>
                   </div>
                 </div>
@@ -457,7 +584,8 @@ export const AutoBackupConfigModal: React.FC<AutoBackupConfigModalProps> = ({
 
               {/* Testes de conectividade */}
               {((equipmentInfo.connectionType === 'ssh' && formData.ssh_enabled) || 
-                (equipmentInfo.connectionType === 'http' && formData.http_enabled)) && (
+                (equipmentInfo.connectionType === 'http' && formData.http_enabled) ||
+                (equipmentInfo.connectionType === 'telnet' && formData.telnet_enabled)) && (
                 <div className="space-y-4">
                   <div className="flex space-x-3">
                     <Button
@@ -468,7 +596,9 @@ export const AutoBackupConfigModal: React.FC<AutoBackupConfigModalProps> = ({
                     >
                       {isTesting ? (
                         <Loader2 className="animate-spin h-4 w-4" />
-                      ) : (equipmentInfo.connectionType === 'ssh' ? connectivity?.sshConnectable : connectivity?.httpConnectable) ? (
+                      ) : (equipmentInfo.connectionType === 'ssh' ? connectivity?.sshConnectable : 
+                           equipmentInfo.connectionType === 'http' ? connectivity?.httpConnectable :
+                           equipmentInfo.connectionType === 'telnet' ? connectivity?.telnetConnectable : false) ? (
                         <Wifi className="h-4 w-4 text-green-600" />
                       ) : (
                         <WifiOff className="h-4 w-4" />
@@ -476,7 +606,9 @@ export const AutoBackupConfigModal: React.FC<AutoBackupConfigModalProps> = ({
                       <span>Testar Conectividade</span>
                     </Button>
 
-                    {(equipmentInfo.connectionType === 'ssh' ? connectivity?.sshConnectable : connectivity?.httpConnectable) && (
+                    {((equipmentInfo.connectionType === 'ssh' && connectivity?.sshConnectable) || 
+                      (equipmentInfo.connectionType === 'http' && connectivity?.httpConnectable) ||
+                      (equipmentInfo.connectionType === 'telnet' && connectivity?.telnetConnectable)) && (
                       <Button
                         onClick={handleExecuteBackup}
                         disabled={isExecuting}
@@ -517,6 +649,17 @@ export const AutoBackupConfigModal: React.FC<AutoBackupConfigModalProps> = ({
                               )}
                               <span>
                                 SSH: {connectivity.ssh?.success ? 'Conectado' : 'Falha'}
+                              </span>
+                            </>
+                          ) : equipmentInfo.connectionType === 'telnet' ? (
+                            <>
+                              {connectivity.telnet?.success ? (
+                                <CheckCircle className="h-4 w-4 text-green-600" />
+                              ) : (
+                                <AlertCircle className="h-4 w-4 text-red-600" />
+                              )}
+                              <span>
+                                Telnet: {connectivity.telnet?.success ? 'Conectado' : 'Falha'}
                               </span>
                             </>
                           ) : (
@@ -564,7 +707,8 @@ export const AutoBackupConfigModal: React.FC<AutoBackupConfigModalProps> = ({
                       className="rounded border-gray-300 text-green-600 focus:ring-green-500"
                       disabled={
                         (equipmentInfo.connectionType === 'ssh' && !formData.ssh_enabled) ||
-                        (equipmentInfo.connectionType === 'http' && !formData.http_enabled)
+                        (equipmentInfo.connectionType === 'http' && !formData.http_enabled) ||
+                        (equipmentInfo.connectionType === 'telnet' && !formData.telnet_enabled)
                       }
                     />
                     <label htmlFor="auto_backup_enabled" className="text-sm font-medium text-gray-700">
