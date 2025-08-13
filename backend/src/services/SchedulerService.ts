@@ -17,6 +17,11 @@ export class SchedulerService {
   private scheduledJobs: Map<number, cron.ScheduledTask> = new Map();
   private autoBackupJobs: Map<number, cron.ScheduledTask> = new Map();
   private isRunning = false;
+  private lastCounts = {
+    scheduled: 0,
+    autoBackup: 0,
+    total: 0
+  };
 
   async initialize() {
     if (this.isRunning) return;
@@ -42,6 +47,7 @@ export class SchedulerService {
         this.scheduleJob(job);
       }
       
+      this.updateCounts();
       console.log(`📅 ${activeJobs.length} jobs agendados carregados`);
     } catch (error) {
       console.error('Erro ao carregar jobs agendados:', error);
@@ -56,6 +62,7 @@ export class SchedulerService {
         this.scheduleAutoBackupJob(equipamento);
       }
       
+      this.updateCounts();
       console.log(`🔄 ${equipamentos.length} jobs de backup automatizado carregados`);
     } catch (error) {
       console.error('Erro ao carregar jobs de backup automatizado:', error);
@@ -86,6 +93,7 @@ export class SchedulerService {
       });
 
       this.scheduledJobs.set(job.id, scheduledTask);
+      this.updateCounts();
       console.log(`📋 Job ${job.id} agendado: ${job.schedule_pattern}`);
     } catch (error) {
       console.error(`Erro ao agendar job ${job.id}:`, error);
@@ -289,11 +297,22 @@ backup-date ${new Date().toISOString()}
   }
 
   getScheduledJobsCount(): number {
-    return this.scheduledJobs.size;
+    return this.lastCounts.scheduled;
   }
 
   getScheduledJobs(): number[] {
     return Array.from(this.scheduledJobs.keys());
+  }
+
+  isServiceRunning(): boolean {
+    return this.isRunning;
+  }
+
+  private updateCounts() {
+    this.lastCounts.scheduled = this.scheduledJobs.size;
+    this.lastCounts.autoBackup = this.autoBackupJobs.size;
+    this.lastCounts.total = this.lastCounts.scheduled + this.lastCounts.autoBackup;
+    // Counts updated silently
   }
 
   private scheduleAutoBackupJob(equipamento: any) {
@@ -319,6 +338,7 @@ backup-date ${new Date().toISOString()}
       });
 
       this.autoBackupJobs.set(equipamento.id, scheduledTask);
+      this.updateCounts();
       console.log(`🔄 Auto backup job ${equipamento.id} (${equipamento.nome}) agendado: ${equipamento.auto_backup_schedule}`);
     } catch (error) {
       console.error(`Erro ao agendar auto backup job ${equipamento.id}:`, error);
@@ -440,7 +460,7 @@ backup-date ${new Date().toISOString()}
   }
 
   getAutoBackupJobsCount(): number {
-    return this.autoBackupJobs.size;
+    return this.lastCounts.autoBackup;
   }
 
   getAutoBackupJobsDetails(): any[] {
@@ -458,7 +478,7 @@ backup-date ${new Date().toISOString()}
   }
 
   getTotalActiveJobs(): number {
-    return this.scheduledJobs.size + this.autoBackupJobs.size;
+    return this.lastCounts.total;
   }
 
   stop() {

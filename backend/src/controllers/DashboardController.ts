@@ -19,6 +19,7 @@ export class DashboardController {
         BackupJobModel.getAll()
       ]);
 
+
       const stats = {
         totalEquipamentos: equipamentos.length,
         totalBackups: backups.length,
@@ -122,6 +123,7 @@ export class DashboardController {
       res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }
+
 
   private static getBackupsByProvider(backups: any[]): Record<string, number> {
     return backups.reduce((acc, backup) => {
