@@ -32,10 +32,10 @@ app.use(helmet({
 }));
 
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://backup.facilnettelecom.com.br', 'http://backup.facilnettelecom.com.br', 'https://localhost', 'http://localhost'] 
-    : ['http://localhost:3000', 'http://localhost:5173', 'http://localhost', 'https://localhost'],
-  credentials: true
+  origin: true, // Permitir qualquer origem temporariamente para debug
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
 }));
 
 app.use(express.json({ limit: '10mb' }));
