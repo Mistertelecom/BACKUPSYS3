@@ -28,22 +28,29 @@ export class AutoBackupController {
 
       let connectivity;
 
-      if (isMimosa && equipamento.http_enabled) {
-        // Teste HTTP para Mimosa
-        const httpConfig: HTTPConfig = {
-          host: equipamento.ip,
-          port: equipamento.http_port || 80,
-          protocol: equipamento.http_protocol || 'http',
-          username: equipamento.http_username || '',
-          password: equipamento.http_password || '',
-          timeout: 10000,
-          ignoreCertificateErrors: equipamento.http_ignore_ssl || false
-        };
+      if (isMimosa) {
+        // Equipamentos Mimosa SEMPRE usam HTTP
+        if (equipamento.http_enabled) {
+          const httpConfig: HTTPConfig = {
+            host: equipamento.ip,
+            port: equipamento.http_port || 80,
+            protocol: equipamento.http_protocol || 'http',
+            username: equipamento.http_username || '',
+            password: equipamento.http_password || '',
+            timeout: 10000,
+            ignoreCertificateErrors: equipamento.http_ignore_ssl || false
+          };
 
-        const httpService = new HTTPService();
-        connectivity = await httpService.checkConnectivity(httpConfig);
+          const httpService = new HTTPService();
+          connectivity = await httpService.checkConnectivity(httpConfig);
+        } else {
+          res.status(400).json({ 
+            error: 'HTTP não está habilitado para este equipamento Mimosa' 
+          });
+          return;
+        }
       } else if (equipamento.ssh_enabled) {
-        // Teste SSH para outros equipamentos
+        // Teste SSH para outros equipamentos (não-Mimosa)
         const sshConfig: SSHConfig = {
           host: equipamento.ip,
           port: equipamento.ssh_port || 22,
@@ -58,9 +65,7 @@ export class AutoBackupController {
         connectivity = await sshService.checkConnectivity(sshConfig);
       } else {
         res.status(400).json({ 
-          error: isMimosa 
-            ? 'HTTP não está habilitado para este equipamento Mimosa' 
-            : 'SSH não está habilitado para este equipamento' 
+          error: 'SSH não está habilitado para este equipamento' 
         });
         return;
       }
@@ -101,21 +106,28 @@ export class AutoBackupController {
       const backupService = new BackupScriptService();
       let capability;
 
-      if (isMimosa && equipamento.http_enabled) {
-        // Teste HTTP para Mimosa
-        const httpConfig: HTTPConfig = {
-          host: equipamento.ip,
-          port: equipamento.http_port || 80,
-          protocol: equipamento.http_protocol || 'http',
-          username: equipamento.http_username || '',
-          password: equipamento.http_password || '',
-          timeout: 10000,
-          ignoreCertificateErrors: equipamento.http_ignore_ssl || false
-        };
+      if (isMimosa) {
+        // Equipamentos Mimosa SEMPRE usam HTTP
+        if (equipamento.http_enabled) {
+          const httpConfig: HTTPConfig = {
+            host: equipamento.ip,
+            port: equipamento.http_port || 80,
+            protocol: equipamento.http_protocol || 'http',
+            username: equipamento.http_username || '',
+            password: equipamento.http_password || '',
+            timeout: 10000,
+            ignoreCertificateErrors: equipamento.http_ignore_ssl || false
+          };
 
-        capability = await backupService.testBackupCapability(equipamento.tipo, undefined, httpConfig);
+          capability = await backupService.testBackupCapability(equipamento.tipo, undefined, httpConfig);
+        } else {
+          res.status(400).json({ 
+            error: 'HTTP não está habilitado para este equipamento Mimosa' 
+          });
+          return;
+        }
       } else if (equipamento.ssh_enabled) {
-        // Teste SSH para outros equipamentos
+        // Teste SSH para outros equipamentos (não-Mimosa)
         const sshConfig: SSHConfig = {
           host: equipamento.ip,
           port: equipamento.ssh_port || 22,
@@ -128,9 +140,7 @@ export class AutoBackupController {
         capability = await backupService.testBackupCapability(equipamento.tipo, sshConfig);
       } else {
         res.status(400).json({ 
-          error: isMimosa 
-            ? 'HTTP não está habilitado para este equipamento Mimosa' 
-            : 'SSH não está habilitado para este equipamento' 
+          error: 'SSH não está habilitado para este equipamento' 
         });
         return;
       }
@@ -171,35 +181,42 @@ export class AutoBackupController {
       const backupService = new BackupScriptService();
       let result;
 
-      if (isMimosa && equipamento.http_enabled) {
-        // Backup HTTP para Mimosa
-        const httpConfig: HTTPConfig = {
-          host: equipamento.ip,
-          port: equipamento.http_port || 80,
-          protocol: equipamento.http_protocol || 'http',
-          username: equipamento.http_username || '',
-          password: equipamento.http_password || '',
-          timeout: 30000,
-          ignoreCertificateErrors: equipamento.http_ignore_ssl || false
-        };
+      if (isMimosa) {
+        // Equipamentos Mimosa SEMPRE usam HTTP
+        if (equipamento.http_enabled) {
+          const httpConfig: HTTPConfig = {
+            host: equipamento.ip,
+            port: equipamento.http_port || 80,
+            protocol: equipamento.http_protocol || 'http',
+            username: equipamento.http_username || '',
+            password: equipamento.http_password || '',
+            timeout: 30000,
+            ignoreCertificateErrors: equipamento.http_ignore_ssl || false
+          };
 
-        const sshConfig: SSHConfig = {
-          host: equipamento.ip,
-          port: 22,
-          username: '',
-          password: '',
-          timeout: 30000
-        };
+          const sshConfig: SSHConfig = {
+            host: equipamento.ip,
+            port: 22,
+            username: '',
+            password: '',
+            timeout: 30000
+          };
 
-        result = await backupService.executeAutoBackup(
-          equipamento.id!,
-          equipamento.nome,
-          equipamento.tipo,
-          sshConfig,
-          httpConfig
-        );
+          result = await backupService.executeAutoBackup(
+            equipamento.id!,
+            equipamento.nome,
+            equipamento.tipo,
+            sshConfig,
+            httpConfig
+          );
+        } else {
+          res.status(400).json({ 
+            error: 'HTTP não está habilitado para este equipamento Mimosa' 
+          });
+          return;
+        }
       } else if (equipamento.ssh_enabled) {
-        // Backup SSH para outros equipamentos
+        // Backup SSH para outros equipamentos (não-Mimosa)
         const sshConfig: SSHConfig = {
           host: equipamento.ip,
           port: equipamento.ssh_port || 22,
@@ -217,9 +234,7 @@ export class AutoBackupController {
         );
       } else {
         res.status(400).json({ 
-          error: isMimosa 
-            ? 'HTTP não está habilitado para este equipamento Mimosa' 
-            : 'SSH não está habilitado para este equipamento' 
+          error: 'SSH não está habilitado para este equipamento' 
         });
         return;
       }
