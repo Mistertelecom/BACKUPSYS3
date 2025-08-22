@@ -2,7 +2,7 @@ import sqlite3 from 'sqlite3';
 import path from 'path';
 import bcrypt from 'bcryptjs';
 
-const DATABASE_PATH = process.env.DATABASE_PATH || './database.sqlite';
+const DATABASE_PATH = process.env.DATABASE_PATH || './database/database.sqlite';
 
 export class Database {
   private db: sqlite3.Database;
