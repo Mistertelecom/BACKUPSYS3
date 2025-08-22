@@ -33,8 +33,8 @@ app.use(helmet({
 
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://backup.facilnettelecom.com.br', 'http://backup.facilnettelecom.com.br'] 
-    : ['http://localhost:3000', 'http://localhost:5173'],
+    ? ['https://backup.facilnettelecom.com.br', 'http://backup.facilnettelecom.com.br', 'https://localhost', 'http://localhost'] 
+    : ['http://localhost:3000', 'http://localhost:5173', 'http://localhost', 'https://localhost'],
   credentials: true
 }));
 
