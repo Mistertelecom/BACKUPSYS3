@@ -368,19 +368,11 @@ backup-date ${new Date().toISOString()}
           ignoreCertificateErrors: equipamento.http_ignore_ssl || false
         };
 
-        const sshConfig = {
-          host: equipamento.ip,
-          port: 22,
-          username: '',
-          password: '',
-          timeout: 30000
-        };
-
         result = await backupScriptService.executeAutoBackup(
           equipamento.id!,
           equipamento.nome,
           equipamento.tipo,
-          sshConfig,
+          undefined,
           httpConfig
         );
       } else if (equipamento.ssh_enabled) {

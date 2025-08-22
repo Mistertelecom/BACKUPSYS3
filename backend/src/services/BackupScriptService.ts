@@ -180,7 +180,7 @@ export class BackupScriptService {
     equipmentId: number,
     equipmentName: string,
     equipmentType: string,
-    sshConfig: SSHConfig,
+    sshConfig?: SSHConfig,
     httpConfig?: HTTPConfig,
     telnetConfig?: TelnetConfig
   ): Promise<BackupExecutionResult> {
@@ -284,6 +284,11 @@ export class BackupScriptService {
 
       } else {
         // BACKUP VIA SSH (Mikrotik, Ubiquiti, Huawei, NE20)
+        if (!sshConfig) {
+          result.error = 'Configuração SSH necessária para equipamentos SSH';
+          return result;
+        }
+        
         await this.sshService.connect(sshConfig);
         console.log(`Conectado via SSH em ${sshConfig.host}:${sshConfig.port}`);
 

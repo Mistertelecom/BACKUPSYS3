@@ -194,19 +194,11 @@ export class AutoBackupController {
             ignoreCertificateErrors: equipamento.http_ignore_ssl || false
           };
 
-          const sshConfig: SSHConfig = {
-            host: equipamento.ip,
-            port: 22,
-            username: '',
-            password: '',
-            timeout: 30000
-          };
-
           result = await backupService.executeAutoBackup(
             equipamento.id!,
             equipamento.nome,
             equipamento.tipo,
-            sshConfig,
+            undefined,
             httpConfig
           );
         } else {
