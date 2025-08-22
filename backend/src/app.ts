@@ -68,13 +68,9 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Serve React app for all non-API routes
-app.get('*', (req, res) => {
-  if (req.path.startsWith('/api/')) {
-    res.status(404).json({ error: 'Rota não encontrada' });
-  } else {
-    res.sendFile(path.join(__dirname, '../../frontend/dist/index.html'));
-  }
+// Handle 404 for API routes only - frontend is served by nginx
+app.get('/api/*', (req, res) => {
+  res.status(404).json({ error: 'Rota não encontrada' });
 });
 
 app.use((err: any, req: any, res: any, next: any) => {
