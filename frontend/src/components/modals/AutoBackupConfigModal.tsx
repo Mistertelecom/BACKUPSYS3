@@ -139,13 +139,17 @@ export const AutoBackupConfigModal: React.FC<AutoBackupConfigModalProps> = ({
       const schedule = equipamento.auto_backup_schedule || '0 2 * * *';
       const parsedSchedule = parseCronToSchedule(schedule);
       
+      // Determinar se equipamento usa HTTP (Mimosa)
+      const type = equipamento.tipo.toLowerCase();
+      const isMimosa = type.includes('mimosa');
+      
       setFormData({
         ssh_enabled: equipamento.ssh_enabled || false,
         ssh_port: equipamento.ssh_port || 22,
         ssh_username: equipamento.ssh_username || '',
         ssh_password: equipamento.ssh_password || '',
         ssh_private_key: equipamento.ssh_private_key || '',
-        http_enabled: equipamento.http_enabled || false,
+        http_enabled: equipamento.http_enabled || isMimosa,
         http_port: equipamento.http_port || 80,
         http_protocol: equipamento.http_protocol || 'http',
         http_username: equipamento.http_username || '',
