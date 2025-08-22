@@ -153,7 +153,7 @@ export const AutoBackupConfigModal: React.FC<AutoBackupConfigModalProps> = ({
         http_port: equipamento.http_port || 80,
         http_protocol: equipamento.http_protocol || 'http',
         http_username: equipamento.http_username || '',
-        http_password: equipamento.http_password || 'mimosa',
+        http_password: equipamento.http_password || '',
         http_ignore_ssl: equipamento.http_ignore_ssl || false,
         telnet_enabled: false,
         telnet_port: 23,
