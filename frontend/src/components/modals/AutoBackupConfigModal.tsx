@@ -189,35 +189,50 @@ export const AutoBackupConfigModal: React.FC<AutoBackupConfigModalProps> = ({
 
   const handleTestConnectivity = async () => {
     const equipmentInfo = getSupportedEquipmentInfo();
+    const type = equipamento.tipo.toLowerCase();
+    const isMimosa = type.includes('mimosa');
     
-    if (equipmentInfo.connectionType === 'ssh' && !formData.ssh_enabled) {
-      toast.error('Habilite SSH primeiro para testar conectividade');
-      return;
+    // Para equipamentos Mimosa, sempre usar HTTP
+    if (isMimosa) {
+      if (!formData.http_enabled) {
+        toast.error('Habilite HTTP primeiro para testar conectividade');
+        return;
+      }
+      if (!formData.http_password) {
+        toast.error('Configure senha para testar conectividade HTTP');
+        return;
+      }
     }
-    
-    if (equipmentInfo.connectionType === 'telnet' && !formData.telnet_enabled) {
-      toast.error('Habilite Telnet primeiro para testar conectividade');
-      return;
+    // Para outros equipamentos, usar lógica original
+    else if (equipmentInfo.connectionType === 'ssh') {
+      if (!formData.ssh_enabled) {
+        toast.error('Habilite SSH primeiro para testar conectividade');
+        return;
+      }
+      if (!formData.ssh_username || (!formData.ssh_password && !formData.ssh_private_key)) {
+        toast.error('Configure usuário e senha/chave para testar conectividade');
+        return;
+      }
     }
-    
-    if (equipmentInfo.connectionType === 'http' && !formData.http_enabled) {
-      toast.error('Habilite HTTP primeiro para testar conectividade');
-      return;
+    else if (equipmentInfo.connectionType === 'telnet') {
+      if (!formData.telnet_enabled) {
+        toast.error('Habilite Telnet primeiro para testar conectividade');
+        return;
+      }
+      if (!formData.telnet_username || !formData.telnet_password) {
+        toast.error('Configure usuário e senha para testar conectividade Telnet');
+        return;
+      }
     }
-
-    if (equipmentInfo.connectionType === 'ssh' && (!formData.ssh_username || (!formData.ssh_password && !formData.ssh_private_key))) {
-      toast.error('Configure usuário e senha/chave para testar conectividade');
-      return;
-    }
-    
-    if (equipmentInfo.connectionType === 'telnet' && (!formData.telnet_username || !formData.telnet_password)) {
-      toast.error('Configure usuário e senha para testar conectividade Telnet');
-      return;
-    }
-    
-    if (equipmentInfo.connectionType === 'http' && !formData.http_password) {
-      toast.error('Configure senha para testar conectividade HTTP');
-      return;
+    else if (equipmentInfo.connectionType === 'http') {
+      if (!formData.http_enabled) {
+        toast.error('Habilite HTTP primeiro para testar conectividade');
+        return;
+      }
+      if (!formData.http_password) {
+        toast.error('Configure senha para testar conectividade HTTP');
+        return;
+      }
     }
 
     setIsTesting(true);
