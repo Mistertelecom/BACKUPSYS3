@@ -198,6 +198,67 @@ export class EquipamentoModel {
     });
   }
 
+  static async updateAutoBackupConfig(id: number, config: {
+    ssh_enabled?: boolean;
+    ssh_port?: number;
+    ssh_username?: string | null;
+    ssh_password?: string | null;
+    ssh_private_key?: string | null;
+    http_enabled?: boolean;
+    http_port?: number;
+    http_protocol?: 'http' | 'https';
+    http_username?: string | null;
+    http_password?: string | null;
+    http_ignore_ssl?: boolean;
+    auto_backup_enabled?: boolean;
+    auto_backup_schedule?: string;
+  }): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      const sql = `
+        UPDATE equipamentos SET 
+          ssh_enabled = ?,
+          ssh_port = ?,
+          ssh_username = ?,
+          ssh_password = ?,
+          ssh_private_key = ?,
+          http_enabled = ?,
+          http_port = ?,
+          http_protocol = ?,
+          http_username = ?,
+          http_password = ?,
+          http_ignore_ssl = ?,
+          auto_backup_enabled = ?,
+          auto_backup_schedule = ?
+        WHERE id = ?
+      `;
+      
+      const values = [
+        config.ssh_enabled ? 1 : 0,
+        config.ssh_port || 22,
+        config.ssh_username,
+        config.ssh_password,
+        config.ssh_private_key,
+        config.http_enabled ? 1 : 0,
+        config.http_port || 80,
+        config.http_protocol || 'http',
+        config.http_username,
+        config.http_password,
+        config.http_ignore_ssl ? 1 : 0,
+        config.auto_backup_enabled ? 1 : 0,
+        config.auto_backup_schedule || '0 2 * * *',
+        id
+      ];
+      
+      database.getDatabase().run(sql, values, function(err) {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(this.changes > 0);
+        }
+      });
+    });
+  }
+
   static async getWithAutoBackupEnabled(): Promise<Equipamento[]> {
     return new Promise((resolve, reject) => {
       const sql = `

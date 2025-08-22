@@ -284,6 +284,12 @@ export class AutoBackupController {
         ssh_username,
         ssh_password,
         ssh_private_key,
+        http_enabled,
+        http_port,
+        http_protocol,
+        http_username,
+        http_password,
+        http_ignore_ssl,
         auto_backup_enabled,
         auto_backup_schedule
       } = req.body;
@@ -303,13 +309,19 @@ export class AutoBackupController {
         return;
       }
 
-      // Atualizar equipamento
-      const updated = await EquipamentoModel.updateSSHConfig(parseInt(equipamentoId), {
+      // Atualizar equipamento com configurações completas (SSH + HTTP)
+      const updated = await EquipamentoModel.updateAutoBackupConfig(parseInt(equipamentoId), {
         ssh_enabled: ssh_enabled || false,
         ssh_port: ssh_port || 22,
         ssh_username: ssh_username || null,
         ssh_password: ssh_password || null,
         ssh_private_key: ssh_private_key || null,
+        http_enabled: http_enabled || false,
+        http_port: http_port || 80,
+        http_protocol: http_protocol || 'http',
+        http_username: http_username || null,
+        http_password: http_password || null,
+        http_ignore_ssl: http_ignore_ssl || false,
         auto_backup_enabled: auto_backup_enabled || false,
         auto_backup_schedule: auto_backup_schedule || '0 2 * * *'
       });
